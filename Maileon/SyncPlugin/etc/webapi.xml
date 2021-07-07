@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+    <route url="/V1/maileon/webhook-unsubscribe" method="POST">
+        <service class="Maileon\SyncPlugin\Api\MaileonWebhookInterface" method="getUnsubscribeWebhook"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <route url="/V1/maileon/webhook-doi-confirm" method="POST">
+        <service class="Maileon\SyncPlugin\Api\MaileonWebhookInterface" method="getDoiConfirmWebhook"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <route url="/V1/maileon/mark-abandoned-carts" method="GET">
+        <service class="Maileon\SyncPlugin\Api\MaileonTestInterface" method="testMarkAbandonedCarts"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <route url="/V1/maileon/send-abandoned-carts-emails" method="GET">
+        <service class="Maileon\SyncPlugin\Api\MaileonTestInterface" method="testSendAbandonedCartsEmails"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+</routes>

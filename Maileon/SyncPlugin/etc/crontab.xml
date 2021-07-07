@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="default">
+        <job name="maileon_makeabandonedcarts" instance="Maileon\SyncPlugin\Cron\MarkAbandonedCarts" method="execute">
+            <schedule>*/1 * * * *</schedule>
+        </job>
+        <job name="maileon_sendabandonedcarts" instance="Maileon\SyncPlugin\Cron\SendAbandonedCartsEmails" method="execute">
+            <schedule>*/1 * * * *</schedule>
+        </job>
+    </group>
+</config>

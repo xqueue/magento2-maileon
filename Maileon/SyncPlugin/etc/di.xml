@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <preference for="Maileon\SyncPlugin\Api\MaileonWebhookInterface" type="Maileon\SyncPlugin\Model\Api\MaileonWebhook"/>
+
+    <preference for="Maileon\SyncPlugin\Api\MaileonTestInterface" type="Maileon\SyncPlugin\Model\Api\MaileonTest"/>
+
+    <type name="Maileon\SyncPlugin\Logger\Handler">
+        <arguments>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+
+    <type name="Maileon\SyncPlugin\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">maileonLogger</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">Maileon\SyncPlugin\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Newsletter\Controller\Subscriber\NewAction">
+        <plugin name="MaileonSyncPluginControllerSubscriber" type="Maileon\SyncPlugin\Controller\Subscriber" sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Newsletter\Controller\Manage\Save">
+        <plugin name="MaileonSyncPluginControllerManage" type="Maileon\SyncPlugin\Controller\Manage" sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Customer\Controller\Account\CreatePost">
+        <plugin name="MaileonSyncPluginControllerAccount" type="Maileon\SyncPlugin\Controller\Account" sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Newsletter\Model\Subscriber">
+        <plugin name="MaileonSyncPluginModelSubscriber" type="Maileon\SyncPlugin\Model\Newsletter\Subscriber" sortOrder="1" disabled="false"/>
+    </type>
+
+</config>
