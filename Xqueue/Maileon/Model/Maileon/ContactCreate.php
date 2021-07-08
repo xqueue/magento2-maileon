@@ -11,7 +11,6 @@ use de\xqueue\maileon\api\client\contacts\Contact;
 use de\xqueue\maileon\api\client\contacts\Permission;
 use de\xqueue\maileon\api\client\contacts\StandardContactField;
 use de\xqueue\maileon\api\client\contacts\SynchronizationMode;
-use de\xqueue\maileon\api\client\contactevents\ContactEventDataType;
 use de\xqueue\maileon\api\client\transactions\TransactionsDataType;
 use de\xqueue\maileon\api\client\MaileonAPIException;
 
@@ -90,20 +89,6 @@ class ContactCreate
         );
 
         $this->logger = \Magento\Framework\App\ObjectManager::getInstance()->get('\Psr\Log\LoggerInterface');
-
-        $this->initializeMaileonStaticClasses();
-    }
-
-    /**
-     * Initialize Maileon static classes
-     */
-    private function initializeMaileonStaticClasses()
-    {
-        SynchronizationMode::init();
-        Permission::init();
-        StandardContactField::init();
-        ContactEventDataType::init();
-        TransactionsDataType::init();
     }
 
     /**

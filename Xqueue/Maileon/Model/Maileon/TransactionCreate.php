@@ -6,10 +6,6 @@
 
 namespace Xqueue\Maileon\Model\Maileon;
 
-use de\xqueue\maileon\api\client\contacts\Permission;
-use de\xqueue\maileon\api\client\contacts\StandardContactField;
-use de\xqueue\maileon\api\client\contacts\SynchronizationMode;
-use de\xqueue\maileon\api\client\contactevents\ContactEventDataType;
 use de\xqueue\maileon\api\client\transactions\TransactionsDataType;
 use de\xqueue\maileon\api\client\transactions\TransactionsService;
 use de\xqueue\maileon\api\client\transactions\TransactionType;
@@ -42,17 +38,6 @@ class TransactionCreate
         $this->print_curl = $print_curl;
     }
 
-    /**
-     * Initialize Maileon static classes
-     */
-    private function initializeMaileonStaticClasses()
-    {
-        SynchronizationMode::init();
-        Permission::init();
-        StandardContactField::init();
-        ContactEventDataType::init();
-        TransactionsDataType::init();
-    }
 
     /**
      * Make Maileon transaction type for Magento
@@ -62,7 +47,6 @@ class TransactionCreate
 
     public function setTransactionType()
     {
-        $this->initializeMaileonStaticClasses();
 
         $maileon_config = array(
             'BASE_URI' => 'https://api.maileon.com/1.0',
@@ -196,7 +180,6 @@ class TransactionCreate
 
     public function setTransactionTypeExtended()
     {
-        $this->initializeMaileonStaticClasses();
 
         $maileon_config = array(
             'BASE_URI' => 'https://api.maileon.com/1.0',
@@ -370,7 +353,6 @@ class TransactionCreate
 
     public function setTransactionTypeAbandoned()
     {
-        $this->initializeMaileonStaticClasses();
 
         $maileon_config = array(
             'BASE_URI' => 'https://api.maileon.com/1.0',
@@ -472,7 +454,6 @@ class TransactionCreate
         $standard_fields = array(),
         $custom_fields = array()
     ) {
-        $this->initializeMaileonStaticClasses();
 
         $logger = \Magento\Framework\App\ObjectManager::getInstance()->get('\Psr\Log\LoggerInterface');
 
