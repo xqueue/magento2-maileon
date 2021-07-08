@@ -17,7 +17,7 @@
                 </field>
                 <field id="print_curl" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Print CURL Debug Data</label>
-                    <comment>This mode is for additional output when debugging Cron-Jobs.</comment>
+                    <comment>This mode is for additional output when debugging.</comment>
                     <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
                 </field>
             </group>
@@ -29,34 +29,35 @@
                     <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
                 </field>
                 <field id="permission" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Permission</label>
+                    <label>Initial Permission</label>
+                    <comment>This is the permission a newsletter subscriber will be created in maileon with. Usually NONE (no permission) is the correct choice.</comment>
                     <source_model>Xqueue\Maileon\Model\Config\ListPermission</source_model>
                 </field>
                 <field id="doi_process" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>DOI process</label>
-                    <comment>Enable the DOI process?</comment>
+                    <comment>Send a Double-Opt-In mail from Maileon?</comment>
                     <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
                 </field>
                 <field id="doi_plus_process" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>DOI+ process</label>
-                    <comment>Enable the DOI+ process?</comment>
+                    <comment>Request DOI+ (Double-Opt-In with permission for single user tracking). Requires 'DOI Process' to be enabled.</comment>
                     <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
                 </field>
                 <field id="doi_key" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Doi Mailing ID</label>
-                    <comment>If DOI process enabled, this ID of the DOI mailing that should be used. If left blank, the default DOI mailing will be sent. Default [blank].</comment>
+                    <comment>If 'DOI process_ enabled, the DOI mailing with the given key should be used. If left blank, the default DOI mailing will be sent. Default [blank].</comment>
                 </field>
                 <field id="unsubscribe_token" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Unsubscribe Hook Token</label>
-                    <comment>This is the token that has to be passed as a parameter with the call of the Unsubscribe hook from Maileon. Use parameter token=</comment>
+                    <label>Unsubscription Hook Token</label>
+                    <comment>This is the token that has to be passed as a parameter with the call of the unsubscription webhook from Maileon. Use parameter token=</comment>
                 </field>
                 <field id="doi_token" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Doi Hook Token</label>
-                    <comment>This is the token that has to be passed as a parameter with the call of the DOI confirmation hook from Maileon. Use parameter token=</comment>
+                    <label>DOI Confirmation Hook Token</label>
+                    <comment>This is the token that has to be passed as a parameter with the call of the DOI confirmation webhook from Maileon. Use parameter token=</comment>
                 </field>
                 <field id="unsubscribe_all_emails" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>At Store view all emails should be unsubscribe</label>
-                    <comment>If use more Store view and there is a subscriber with the same email in several Store views, all email addresses will be unsubscribed from every Store view, if the magento_storeview_id is missing.</comment>
+                    <label>Unsubscribe All Emails</label>
+                    <comment>If using different storeviews, the same email can be subscribed several times in Magento (since Magento 2.4). As each contact can be distributed among different Maileon newsletter accounts, Magento needs to know the storeview to mark contacts as "subscribed" or "unsubscribed". Maileon realizes this by passing the storeview ID along the calls but if it is not available, this option handels the behavior. If set to true and storeview_id is missing, all contacts with the same email address will be unsubscribed. If set to false, the unsubscription will be ignored, so best is to properly set up the parameter passing and/or setting this to true.</comment>
                     <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
                 </field>
                 <field id="disable_request_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
