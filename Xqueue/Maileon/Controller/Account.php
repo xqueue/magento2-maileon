@@ -83,7 +83,6 @@ class Account
 
                     if ($ping_result == 401) {
                         $logger->debug('Maileon API key is wrong!');
-                        return $result;
                     } else {
                         try {
                             $sync = new ContactCreate(
@@ -117,10 +116,8 @@ class Account
 
                             if ($response) {
                                 $logger->info('Contact subscribe Done!');
-                                return $result;
                             } else {
                                 $logger->debug('Contact subscribe Failed!');
-                                return $result;
                             }
                         } catch (\Magento\Framework\Exception\LocalizedException $e) {
                             $this->messageManager->addException(
@@ -131,11 +128,14 @@ class Account
                     }
                 } else {
                     $logger->debug('Maileon API key or permission settings is empty!');
-                    return $result;
                 }
+            } else {
+                $logger->debug('The customer is already subscribed!');
             }
         } else {
             $logger->info('Newsletter module inactive!');
         }
+
+        return $result;
     }
 }
