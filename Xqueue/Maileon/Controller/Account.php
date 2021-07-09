@@ -136,6 +136,7 @@ class Account
             }
         } else {
             $logger->info('Newsletter module inactive!');
+            return $result;
         }
     }
 }
