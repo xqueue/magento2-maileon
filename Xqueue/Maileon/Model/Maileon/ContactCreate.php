@@ -11,7 +11,7 @@ use de\xqueue\maileon\api\client\contacts\Contact;
 use de\xqueue\maileon\api\client\contacts\Permission;
 use de\xqueue\maileon\api\client\contacts\StandardContactField;
 use de\xqueue\maileon\api\client\contacts\SynchronizationMode;
-use de\xqueue\maileon\api\client\transactions\TransactionsDataType;
+use de\xqueue\maileon\api\client\reports\ReportsService;
 use de\xqueue\maileon\api\client\MaileonAPIException;
 
 class ContactCreate
@@ -89,6 +89,11 @@ class ContactCreate
         );
 
         $this->logger = \Magento\Framework\App\ObjectManager::getInstance()->get('\Psr\Log\LoggerInterface');
+    }
+
+    public function setPermission($permission)
+    {
+        $this->permission = $permission;
     }
 
     /**
@@ -178,6 +183,38 @@ class ContactCreate
         }
     }
 
+    public function getPermission($buyer_enabled, $buyer_permission)
+    {
+        $reportsService = new ReportsService($this->maileon_config);
+
+        try {
+            $response = $reportsService->getUnsubscribers(null, null, null, null, array($this->email));
+            $unsubscribers = $response->getResult();
+        } catch (MaileonAPIException $e) {
+            $this->logger->error(
+                (string) $e->getMessage()
+            );
+        }
+
+        if (empty($unsubscribers)) {
+            $unsubscribed = false;
+        } else {
+            $unsubscribed = true;
+        }
+
+        if ($buyer_enabled) {
+            if ($unsubscribed) {
+                $permission = 'none';
+            } else {
+                $permission = $buyer_permission;
+            }
+        } else {
+            $permission = 'none';
+        }
+
+        return $permission;
+    }
+
     public function checkCustomFields($custom_fields)
     {
         $contacts_service = new ContactsService($this->maileon_config);
@@ -254,17 +291,18 @@ class ContactCreate
 
     public function maileonContactIsExists()
     {
-        $contacts = new ContactsService($this->maileon_config);
-        $contacts->setDebug($this->print_curl);
+        $contactsService = new ContactsService($this->maileon_config);
+        $contactsService->setDebug($this->print_curl);
 
-        $result = $contacts->getContactByEmail($this->email);
-        $exists = $result->getResult();
-
-        if (empty($exists)) {
-            return false;
-        } else {
-            return $exists;
+        try {
+            $response = $contactsService->getContactByEmail($this->email);
+        } catch (MaileonAPIException $e) {
+            $this->logger->error(
+                (string) $e->getMessage()
+            );
         }
+
+        return $response->isSuccess();
     }
 
     /**
@@ -274,12 +312,18 @@ class ContactCreate
      */
     public function unsubscribeMalieonContact()
     {
-        $contacts_service = new ContactsService($this->maileon_config);
-        $contacts_service->setDebug($this->print_curl);
+        $contactsService = new ContactsService($this->maileon_config);
+        $contactsService->setDebug($this->print_curl);
 
-        $maileon_response = $contacts_service->unsubscribeContactByEmail($this->email);
+        try {
+            $response = $contactsService->unsubscribeContactByEmail($this->email);
+        } catch (MaileonAPIException $e) {
+            $this->logger->error(
+                (string) $e->getMessage()
+            );
+        }
 
-        $success = $maileon_response->isSuccess();
+        $success = $response->isSuccess();
 
         if ($success) {
             return true;

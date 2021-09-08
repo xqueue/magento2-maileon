@@ -83,9 +83,14 @@
                     <comment>Enable this module?</comment>
                     <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
                 </field>
-                <field id="permission" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Fallback permission</label>
-                    <comment>If the customer is not a NL subscriber, that will be the permission</comment>
+                <field id="buyers_permission_enabled" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable separate permission for buyers</label>
+                    <comment>Enable separate permission for buyers?</comment>
+                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                </field>
+                <field id="buyers_transaction_permission" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Buyers permission</label>
+                    <comment>Buyers permission</comment>
                     <source_model>Xqueue\Maileon\Model\Config\ListPermission</source_model>
                 </field>
             </group>

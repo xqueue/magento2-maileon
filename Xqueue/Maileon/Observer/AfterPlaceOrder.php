@@ -3,9 +3,6 @@ namespace Xqueue\Maileon\Observer;
 
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Event\ObserverInterface;
-use de\xqueue\maileon\api\client\transactions\TransactionsService;
-use de\xqueue\maileon\api\client\transactions\Transaction;
-use de\xqueue\maileon\api\client\transactions\ContactReference;
 use Xqueue\Maileon\Model\Maileon\TransactionCreate;
 use Xqueue\Maileon\Model\Maileon\ContactCreate;
 
@@ -46,39 +43,27 @@ class AfterPlaceOrder implements ObserverInterface
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
-        $apikey = $objectManager
+        $plugin_config['apikey'] = $objectManager
             ->get('Magento\Framework\App\Config\ScopeConfigInterface')
             ->getValue('syncplugin/general/api_key', ScopeInterface::SCOPE_STORE);
 
-        $permission = $objectManager
-            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
-            ->getValue('syncplugin/newsletter_settings/permission', ScopeInterface::SCOPE_STORE);
-
-        $doiprocess = $objectManager
-            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
-            ->getValue('syncplugin/newsletter_settings/doi_process', ScopeInterface::SCOPE_STORE);
-
-        $doiplusprocess = $objectManager
-            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
-            ->getValue('syncplugin/newsletter_settings/doi_plus_process', ScopeInterface::SCOPE_STORE);
-
-        $doikey = $objectManager
-            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
-            ->getValue('syncplugin/newsletter_settings/doi_key', ScopeInterface::SCOPE_STORE);
-
-        $fallback_permission = $objectManager
-            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
-            ->getValue('syncplugin/orders/permission', ScopeInterface::SCOPE_STORE);
-
-        $print_curl = $objectManager
+        $plugin_config['print_curl'] = $objectManager
             ->get('Magento\Framework\App\Config\ScopeConfigInterface')
             ->getValue('syncplugin/general/print_curl', ScopeInterface::SCOPE_STORE);
 
-        $module_enabled = $objectManager
+        $plugin_config['module_enabled'] = $objectManager
             ->get('Magento\Framework\App\Config\ScopeConfigInterface')
             ->getValue('syncplugin/orders/active_modul', ScopeInterface::SCOPE_STORE);
 
-        if (!empty($apikey) && $module_enabled == 'yes') {
+        $plugin_config['buyers_permission_enabled'] = $objectManager
+            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
+            ->getValue('syncplugin/orders/buyers_permission_enabled', ScopeInterface::SCOPE_STORE);
+
+        $plugin_config['buyers_transaction_permission'] = $objectManager
+            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
+            ->getValue('syncplugin/orders/buyers_transaction_permission', ScopeInterface::SCOPE_STORE);
+
+        if (!empty($plugin_config['apikey']) && $plugin_config['module_enabled'] == 'yes') {
             $orderids = $observer->getEvent()->getOrderIds();
 
             foreach ($orderids as $orderid) {
@@ -98,92 +83,32 @@ class AfterPlaceOrder implements ObserverInterface
 
             if (!empty($customer_id)) {
                 $customer = $this->_customerRepositoryInterface->getById($customer_id);
+
+                $customer_email = $customer->getEmail();
+
                 $customer_data = array(
                     'firstname' => $customer->getFirstname(),
                     'lastname' => $customer->getLastname(),
                     'fullname' => $customer->getFirstname() . ' ' . $customer->getLastname()
                 );
-                $customer_email = $customer->getEmail();
-
-                $checkSubscriber = $this->_subscriber->loadByCustomerId($customer_id);
-
-                if ($checkSubscriber->isSubscribed()) {
-                    $this->createContact(
-                        $apikey,
-                        $customer_email,
-                        $permission,
-                        $doiprocess,
-                        $doiplusprocess,
-                        $doikey,
-                        $print_curl,
-                        $customer_data
-                    );
-                } else {
-                    $this->createContact(
-                        $apikey,
-                        $customer_email,
-                        $fallback_permission,
-                        'no',
-                        'no',
-                        null,
-                        $print_curl,
-                        $customer_data
-                    );
-                }
             } else {
                 $customer_email = $order->getCustomerEmail();
+
                 $customer_data = array(
                     'firstname' => $shipping_address_array['firstname'],
                     'lastname' => $shipping_address_array['lastname'],
                     'fullname' => $shipping_address_array['firstname'] . ' ' . $shipping_address_array['lastname']
                 );
-
-                $this->createContact(
-                    $apikey,
-                    $customer_email,
-                    $fallback_permission,
-                    'no',
-                    'no',
-                    null,
-                    $print_curl,
-                    $customer_data
-                );
             }
 
-            $maileon_config = array(
-                'BASE_URI' => 'https://api.maileon.com/1.0',
-                'API_KEY' => $apikey,
-                'TIMEOUT' => 15
+            $this->createContact(
+                $plugin_config['apikey'],
+                $customer_email,
+                $plugin_config,
+                $customer_data
             );
 
-            $transactionsService = new TransactionsService($maileon_config);
-
-            if ($print_curl == 'yes') {
-                $transactionsService->setDebug(true);
-            } else {
-                $transactionsService->setDebug(false);
-            }
-
-            $existsTransactionType = $transactionsService->getTransactionTypeByName('magento_orders_v2');
-            $existsTransactionType_ext = $transactionsService->getTransactionTypeByName('magento_orders_extended_v2');
-
-            $sync = new TransactionCreate($apikey, $print_curl);
-
-            if ($existsTransactionType->getStatusCode() === 404) {
-                $existsTransactionType = $sync->setTransactionType();
-            }
-
-            if ($existsTransactionType_ext->getStatusCode() === 404) {
-                $existsTransactionType_ext = $sync->setTransactionTypeExtended();
-            }
-
-            // Create a transaction event and specify basic settings
-
-            $transaction = new Transaction();
-            $transaction->contact = new ContactReference();
-            $transaction->contact->email = $customer_email;
-
-            $transaction->typeName = 'magento_orders_v2';
+            $transactionCreate = new TransactionCreate($plugin_config['apikey'], $plugin_config['print_curl']);
 
             // Specify the content
 
@@ -208,14 +133,14 @@ class AfterPlaceOrder implements ObserverInterface
                 ''
             );
 
-            $transaction->content['order.id']                = $order->getId();
-            $transaction->content['order.date']              = $order->getCreatedAt();
-            $transaction->content['order.status']            = $order->getStatus();
-            $transaction->content['order.total']             = (float) $order_total;
-            $transaction->content['order.total_tax']         = (float) $order_total_tax;
-            $transaction->content['order.total_no_shipping'] = (float) $order_total_no_shipping;
-            $transaction->content['order.currency']          = $order->getOrderCurrencyCode();
-            $transaction->content['shipping.service.name']   = $order->getShippingMethod();
+            $content['order.id']                = $order->getId();
+            $content['order.date']              = $order->getCreatedAt();
+            $content['order.status']            = $order->getStatus();
+            $content['order.total']             = (float) $order_total;
+            $content['order.total_tax']         = (float) $order_total_tax;
+            $content['order.total_no_shipping'] = (float) $order_total_no_shipping;
+            $content['order.currency']          = $order->getOrderCurrencyCode();
+            $content['shipping.service.name']   = $order->getShippingMethod();
             $items = array();
 
             // Product items
@@ -281,114 +206,95 @@ class AfterPlaceOrder implements ObserverInterface
                     array_push($items, $product_item);
                 }
 
-                $transaction_ext = new Transaction();
-                $transaction_ext->contact = new ContactReference();
-                $transaction_ext->contact->email = $customer_email;
-                $transaction_ext->typeName = 'magento_orders_extended_v2';
-
-                $transaction_ext->content['order.id']                   = $order->getId();
-                $transaction_ext->content['order.date']                 = $order->getCreatedAt();
-                $transaction_ext->content['order.status']               = $order->getStatus();
-                $transaction_ext->content['order.total']                = (float) $order_total;
-                $transaction_ext->content['order.total_tax']            = (float) $order_total_tax;
-                $transaction_ext->content['order.total_no_shipping']    = (float) $order_total_no_shipping;
-                $transaction_ext->content['order.currency']             = $order->getOrderCurrencyCode();
-                $transaction_ext->content['shipping.service.name']      = $order->getShippingMethod();
-                $transaction_ext->content['product.id']                 = $item->getProductId();
-                $transaction_ext->content['product.title']              = $item->getName();
-                $transaction_ext->content['product.single_price']       = $item_single_price;
-                $transaction_ext->content['product.total']              = $item_total;
-                $transaction_ext->content['product.sku']                = $item->getSku();
-                $transaction_ext->content['product.quantity']           = (string) round($item->getQtyOrdered());
-                $transaction_ext->content['product.image_url']          = $image_url;
-                $transaction_ext->content['product.url']                = $product_url;
-                $transaction_ext->content['product.categories']         = $product_categories;
-                $transaction_ext->content['product.short_description']  = $product->getShortDescription();
-                $transaction_ext->content['shipping.address.firstname'] = $shipping_address_array['firstname'];
-                $transaction_ext->content['shipping.address.lastname']  = $shipping_address_array['lastname'];
-                $transaction_ext->content['shipping.address.phone']     = $shipping_address_array['telephone'];
-                $transaction_ext->content['shipping.address.region']    = $shipping_address_array['region'];
-                $transaction_ext->content['shipping.address.city']      = $shipping_address_array['city'];
-                $transaction_ext->content['shipping.address.zip']       = $shipping_address_array['postcode'];
-                $transaction_ext->content['shipping.address.street']    = $shipping_address_array['street'];
-                $transaction_ext->content['billing.address.firstname']  = $billing_address_array['firstname'];
-                $transaction_ext->content['billing.address.lastname']   = $billing_address_array['lastname'];
-                $transaction_ext->content['billing.address.phone']      = $billing_address_array['telephone'];
-                $transaction_ext->content['billing.address.region']     = $billing_address_array['region'];
-                $transaction_ext->content['billing.address.city']       = $billing_address_array['city'];
-                $transaction_ext->content['billing.address.zip']        = $billing_address_array['postcode'];
-                $transaction_ext->content['billing.address.street']     = $billing_address_array['street'];
+                $content_ext['order.id']                   = $order->getId();
+                $content_ext['order.date']                 = $order->getCreatedAt();
+                $content_ext['order.status']               = $order->getStatus();
+                $content_ext['order.total']                = (float) $order_total;
+                $content_ext['order.total_tax']            = (float) $order_total_tax;
+                $content_ext['order.total_no_shipping']    = (float) $order_total_no_shipping;
+                $content_ext['order.currency']             = $order->getOrderCurrencyCode();
+                $content_ext['shipping.service.name']      = $order->getShippingMethod();
+                $content_ext['product.id']                 = $item->getProductId();
+                $content_ext['product.title']              = $item->getName();
+                $content_ext['product.single_price']       = $item_single_price;
+                $content_ext['product.total']              = $item_total;
+                $content_ext['product.sku']                = $item->getSku();
+                $content_ext['product.quantity']           = (string) round($item->getQtyOrdered());
+                $content_ext['product.image_url']          = $image_url;
+                $content_ext['product.url']                = $product_url;
+                $content_ext['product.categories']         = $product_categories;
+                $content_ext['product.short_description']  = $product->getShortDescription();
+                $content_ext['shipping.address.firstname'] = $shipping_address_array['firstname'];
+                $content_ext['shipping.address.lastname']  = $shipping_address_array['lastname'];
+                $content_ext['shipping.address.phone']     = $shipping_address_array['telephone'];
+                $content_ext['shipping.address.region']    = $shipping_address_array['region'];
+                $content_ext['shipping.address.city']      = $shipping_address_array['city'];
+                $content_ext['shipping.address.zip']       = $shipping_address_array['postcode'];
+                $content_ext['shipping.address.street']    = $shipping_address_array['street'];
+                $content_ext['billing.address.firstname']  = $billing_address_array['firstname'];
+                $content_ext['billing.address.lastname']   = $billing_address_array['lastname'];
+                $content_ext['billing.address.phone']      = $billing_address_array['telephone'];
+                $content_ext['billing.address.region']     = $billing_address_array['region'];
+                $content_ext['billing.address.city']       = $billing_address_array['city'];
+                $content_ext['billing.address.zip']        = $billing_address_array['postcode'];
+                $content_ext['billing.address.street']     = $billing_address_array['street'];
 
                 // Get custom implementations of customer attributes for order extended transaction
                 $customExtAttributes = $this->helper->getCustomOrderExtendedTransactionAttributes(
-                    $transaction_ext->content
+                    $content_ext
                 );
 
                 foreach ($customExtAttributes as $key => $value) {
-                    $transaction_ext->content[$key] = $value;
+                    $content_ext[$key] = $value;
                 }
 
                 if (!empty((int) $item_total)) {
-                    $transactions_ext = array($transaction_ext);
-
                     // Send the request
-                    $response_ext = $transactionsService->createTransactions($transactions_ext, true, false);
-
-                    $success_ext = $response_ext->isSuccess();
-
-                    if (!$success_ext) {
-                        $logger->debug('Maileon Transaction Save Data error (extended)!');
-                    }
+                    $transactionCreate->sendOrderTransaction(
+                        $customer_email,
+                        'magento_orders_extended_v2',
+                        $content_ext
+                    );
                 }
             }
-            $transaction->content['order.items']                = $items;
-            $transaction->content['shipping.address.firstname'] = $shipping_address_array['firstname'];
-            $transaction->content['shipping.address.lastname']  = $shipping_address_array['lastname'];
-            $transaction->content['shipping.address.phone']     = $shipping_address_array['telephone'];
-            $transaction->content['shipping.address.region']    = $shipping_address_array['region'];
-            $transaction->content['shipping.address.city']      = $shipping_address_array['city'];
-            $transaction->content['shipping.address.zip']       = $shipping_address_array['postcode'];
-            $transaction->content['shipping.address.street']    = $shipping_address_array['street'];
-            $transaction->content['billing.address.firstname']  = $billing_address_array['firstname'];
-            $transaction->content['billing.address.lastname']   = $billing_address_array['lastname'];
-            $transaction->content['billing.address.phone']      = $billing_address_array['telephone'];
-            $transaction->content['billing.address.region']     = $billing_address_array['region'];
-            $transaction->content['billing.address.city']       = $billing_address_array['city'];
-            $transaction->content['billing.address.zip']        = $billing_address_array['postcode'];
-            $transaction->content['billing.address.street']     = $billing_address_array['street'];
+            $content['order.items']                = $items;
+            $content['shipping.address.firstname'] = $shipping_address_array['firstname'];
+            $content['shipping.address.lastname']  = $shipping_address_array['lastname'];
+            $content['shipping.address.phone']     = $shipping_address_array['telephone'];
+            $content['shipping.address.region']    = $shipping_address_array['region'];
+            $content['shipping.address.city']      = $shipping_address_array['city'];
+            $content['shipping.address.zip']       = $shipping_address_array['postcode'];
+            $content['shipping.address.street']    = $shipping_address_array['street'];
+            $content['billing.address.firstname']  = $billing_address_array['firstname'];
+            $content['billing.address.lastname']   = $billing_address_array['lastname'];
+            $content['billing.address.phone']      = $billing_address_array['telephone'];
+            $content['billing.address.region']     = $billing_address_array['region'];
+            $content['billing.address.city']       = $billing_address_array['city'];
+            $content['billing.address.zip']        = $billing_address_array['postcode'];
+            $content['billing.address.street']     = $billing_address_array['street'];
 
             // Get custom implementations of customer attributes for order transaction
-            $customAttributes = $this->helper->getCustomOrderTransactionAttributes($transaction->content);
+            $customAttributes = $this->helper->getCustomOrderTransactionAttributes($content);
 
             foreach ($customAttributes as $key => $value) {
-                $transaction->content[$key] = $value;
+                $content[$key] = $value;
             }
-
-            $transactions = array($transaction);
 
             // Send the request
-            $response = $transactionsService->createTransactions($transactions, true, false);
-
-            $success = $response->isSuccess();
-
-            if (!$success) {
-                $logger->debug('Maileon Transaction Save Data error!');
-            } else {
-                $logger->info('Maileon Transaction sync done!');
-            }
+            $transactionCreate->sendOrderTransaction(
+                $customer_email,
+                'magento_orders_v2',
+                $content
+            );
         } else {
-            $logger->debug('Missing Maileon API key or module inactive!');
+            $logger->info('Missing Maileon API key or module inactive!');
         }
     }
 
     private function createContact(
         $apikey,
         $email,
-        $permission,
-        $doiprocess,
-        $doiplusprocess,
-        $doikey,
-        $print_curl,
+        $plugin_config,
         $customer_data
     ) {
         $logger = \Magento\Framework\App\ObjectManager::getInstance()->get('\Psr\Log\LoggerInterface');
@@ -397,11 +303,11 @@ class AfterPlaceOrder implements ObserverInterface
         $contact_create = new ContactCreate(
             $apikey,
             $email,
-            $permission,
-            $doiprocess,
-            $doiplusprocess,
-            $doikey,
-            $print_curl
+            'none',
+            false,
+            false,
+            null,
+            $plugin_config['print_curl']
         );
 
         $standard_fields = array();
@@ -412,13 +318,20 @@ class AfterPlaceOrder implements ObserverInterface
         );
 
         if (!$contact_create->maileonContactIsExists()) {
+            $contact_create->setPermission($contact_create->getPermission(
+                $plugin_config['buyers_permission_enabled'],
+                $plugin_config['buyers_transaction_permission']
+            ));
+
             $response = $contact_create->makeMalieonContact($customer_data, $standard_fields, $custom_fields);
 
             if ($response) {
                 $logger->info('Contact subscribe Done!');
             } else {
-                $logger->debug('Contact subscribe Failed!');
+                $logger->error('Contact subscribe Failed!');
             }
+        } else {
+            $logger->info('Contact exists at Maileon.');
         }
     }
 }

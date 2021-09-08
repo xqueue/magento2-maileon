@@ -3,7 +3,34 @@
 
 ## Install the module
 
+#Below version 1.0.8
+
 First step is copy the Maileon plugin to `app/code`. If the `code` directory don't exsist, create a new directory to `app` named `code`.
+
+#From version 1.8.1
+
+Copy the Maileon plugin to the Magento root folder (/sources/magento-2/Xqueue/Maileon/).
+Add the following line to the Magento composer.json:
+
+~~~
+"require": {
+    "xqueue/module-maileon": "^1.8"
+},
+
+"repositories": [
+    {
+        "type": "composer",
+        "url": "https://repo.magento.com/"
+    },
+    {
+        "name": "xqueue/module-maileon",
+        "type": "path",
+        "url": "sources/magento-2/Xqueue/Maileon"
+    }
+],
+~~~
+
+Run composer update at command line
 
 ### Enable the module
 
