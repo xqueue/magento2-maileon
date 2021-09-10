@@ -6,12 +6,13 @@
 
 namespace Xqueue\Maileon\Model\Maileon;
 
-use de\xqueue\maileon\api\client\transactions\TransactionsDataType;
+use de\xqueue\maileon\api\client\transactions\DataType;
 use de\xqueue\maileon\api\client\transactions\TransactionsService;
 use de\xqueue\maileon\api\client\transactions\TransactionType;
 use de\xqueue\maileon\api\client\transactions\AttributeType;
 use de\xqueue\maileon\api\client\transactions\Transaction;
 use de\xqueue\maileon\api\client\transactions\ContactReference;
+use de\xqueue\maileon\api\client\MaileonAPIException;
 use Xqueue\Maileon\Model\Maileon\ContactCreate;
 
 class TransactionCreate
@@ -28,6 +29,14 @@ class TransactionCreate
      */
     private $print_curl;
 
+    /**
+     * Maileon config
+     * @var array $maileon_config
+     */
+    private $maileon_config;
+
+    private $logger;
+
 
     /**
      * @param string $apikey   Maileon API key
@@ -35,9 +44,73 @@ class TransactionCreate
     public function __construct($apikey, $print_curl)
     {
         $this->apikey = $apikey;
-        $this->print_curl = $print_curl;
+        $this->print_curl = filter_var($print_curl, FILTER_VALIDATE_BOOLEAN);
+
+        $this->maileon_config = array(
+            'BASE_URI' => 'https://api.maileon.com/1.0',
+            'API_KEY' => $this->apikey,
+            'TIMEOUT' => 35
+        );
+
+        $this->logger = \Magento\Framework\App\ObjectManager::getInstance()->get('\Psr\Log\LoggerInterface');
     }
 
+    public function sendOrderTransaction(
+        $email,
+        $transaction_name,
+        $content
+    ) {
+        $transactionsService = new TransactionsService($this->maileon_config);
+        $transactionsService->setDebug($this->print_curl);
+
+        $transaction = new Transaction();
+        $transaction->contact = new ContactReference();
+        $transaction->contact->email = $email;
+
+        $existsTransactionType = $this->existsTransactionType($transaction_name);
+
+        if (!$existsTransactionType) {
+            $transactionType = $this->setTransactionType($transaction_name);
+
+            if (!$transactionType) {
+                $this->logger->error(
+                    'Error in TransactionType creation!'
+                );
+            }
+        }
+
+        $transaction->typeName = $transaction_name;
+
+        $transaction->content = $content;
+    
+        try {
+            $transactionsService->createTransactions(array($transaction), true, false);
+        } catch (MaileonAPIException $e) {
+            $this->logger->error(
+                (string) $e->getMessage()
+            );
+        }
+    }
+
+    public function existsTransactionType($transaction_name)
+    {
+        $transactionsService = new TransactionsService($this->maileon_config);
+        $transactionsService->setDebug($this->print_curl);
+
+        try {
+            $existsTransactionType = $transactionsService->getTransactionTypeByName($transaction_name);
+        } catch (MaileonAPIException $e) {
+            $this->logger->error(
+                (string) $e->getMessage()
+            );
+        }
+
+        if ($existsTransactionType->getStatusCode() === 404) {
+            return false;
+        }
+
+        return true;
+    }
 
     /**
      * Make Maileon transaction type for Magento
@@ -45,401 +118,300 @@ class TransactionCreate
      * @return object TransactionType
      */
 
-    public function setTransactionType()
+    public function setTransactionType($transaction_name)
     {
-
-        $maileon_config = array(
-            'BASE_URI' => 'https://api.maileon.com/1.0',
-            'API_KEY' => $this->apikey,
-            'TIMEOUT' => 15
-        );
-
-        $transactionsService = new TransactionsService($maileon_config);
-
-        if ($this->print_curl == 'yes') {
-            $transactionsService->setDebug(true);
-        } else {
-            $transactionsService->setDebug(false);
-        }
+        $transactionsService = new TransactionsService($this->maileon_config);
+        $transactionsService->setDebug($this->print_curl);
 
         $transactionType = new TransactionType();
-        $transactionType->name = 'magento_orders_v2';
+        $transactionType->name = $transaction_name;
 
-        $transactionType->attributes = array(
-            new AttributeType(null, 'order.id', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.date', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'order.status', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.estimated_delivery_time', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.estimated_delivery_date', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'order.product_ids', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.categories', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.brands', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.total', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'order.total_no_shipping', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'order.total_tax', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'order.total_fees', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'order.total_refunds', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'order.fees', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'order.refunds', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'order.currency', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.method.id', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.method.name', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.method.url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.method.image_url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.method.data', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.due_date', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'payment.status', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'discount.code', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'discount.total', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'discount.rules', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'discount.rules_string', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.salutation', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.fullname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.firstname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.lastname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.id', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.items', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'shipping.address.salutation', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.firstname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.lastname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.phone', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.region', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.city', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.country', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.zip', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.street', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.salutation', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.firstname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.lastname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.phone', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.region', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.city', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.country', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.zip', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.street', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.id', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.name', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.image_url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.tracking.code', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.tracking.url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.status', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_1', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_2', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_3', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_4', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_5', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_6', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_7', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_8', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_9', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_10', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.double_1', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_2', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_3', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_4', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_5', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.integer_1', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_2', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_3', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_4', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_5', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.boolean_1', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_2', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_3', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_4', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_5', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.date_1', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'generic.date_2', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'generic.date_3', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'generic.timestamp_1', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'generic.timestamp_2', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'generic.timestamp_3', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'generic.json_1', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'generic.json_2', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'generic.json_3', TransactionsDataType::$JSON, false)
-        );
+        switch ($transaction_name) {
+            case 'magento_orders_v2':
+                $transactionType->attributes = $this->getOrderTransactionType();
+                break;
 
-        $transactionsService->createTransactionType($transactionType);
+            case 'magento_orders_extended_v2':
+                $transactionType->attributes = $this->getOrderExtendedTransactionType();
+                break;
 
-        $existsTransactionType = $transactionsService->getTransactionTypeByName('magento_orders_v2');
+            case 'magento_abandoned_carts_v2':
+                $transactionType->attributes = $this->getCartTransactionType();
+                break;
 
-        if ($existsTransactionType->getStatusCode() === 404) {
-            return false;
-        } else {
-            return $existsTransactionType;
+            default:
+                $transactionType->attributes = $this->getOrderTransactionType();
+                break;
         }
+
+        try {
+            $result = $transactionsService->createTransactionType($transactionType);
+        } catch (MaileonAPIException $e) {
+            $this->logger->error(
+                (string) $e->getMessage()
+            );
+        }
+
+        return $result->isSuccess();
     }
 
-
-    /**
-     * Make Maileon transaction type for Magento extended datas
-     *
-     * @return object TransactionType
-     */
-
-    public function setTransactionTypeExtended()
+    private function getOrderTransactionType()
     {
-
-        $maileon_config = array(
-            'BASE_URI' => 'https://api.maileon.com/1.0',
-            'API_KEY' => $this->apikey,
-            'TIMEOUT' => 15
+        $attributes = array(
+            new AttributeType(null, 'order.id', DataType::$STRING, false),
+            new AttributeType(null, 'order.date', DataType::$TIMESTAMP, false),
+            new AttributeType(null, 'order.status', DataType::$STRING, false),
+            new AttributeType(null, 'order.estimated_delivery_time', DataType::$STRING, false),
+            new AttributeType(null, 'order.estimated_delivery_date', DataType::$DATE, false),
+            new AttributeType(null, 'order.product_ids', DataType::$STRING, false),
+            new AttributeType(null, 'order.categories', DataType::$STRING, false),
+            new AttributeType(null, 'order.brands', DataType::$STRING, false),
+            new AttributeType(null, 'order.total', DataType::$FLOAT, false),
+            new AttributeType(null, 'order.total_no_shipping', DataType::$FLOAT, false),
+            new AttributeType(null, 'order.total_tax', DataType::$FLOAT, false),
+            new AttributeType(null, 'order.total_fees', DataType::$FLOAT, false),
+            new AttributeType(null, 'order.total_refunds', DataType::$FLOAT, false),
+            new AttributeType(null, 'order.fees', DataType::$JSON, false),
+            new AttributeType(null, 'order.refunds', DataType::$JSON, false),
+            new AttributeType(null, 'order.currency', DataType::$STRING, false),
+            new AttributeType(null, 'payment.method.id', DataType::$STRING, false),
+            new AttributeType(null, 'payment.method.name', DataType::$STRING, false),
+            new AttributeType(null, 'payment.method.url', DataType::$STRING, false),
+            new AttributeType(null, 'payment.method.image_url', DataType::$STRING, false),
+            new AttributeType(null, 'payment.method.data', DataType::$STRING, false),
+            new AttributeType(null, 'payment.due_date', DataType::$DATE, false),
+            new AttributeType(null, 'payment.status', DataType::$STRING, false),
+            new AttributeType(null, 'discount.code', DataType::$STRING, false),
+            new AttributeType(null, 'discount.total', DataType::$STRING, false),
+            new AttributeType(null, 'discount.rules', DataType::$JSON, false),
+            new AttributeType(null, 'discount.rules_string', DataType::$STRING, false),
+            new AttributeType(null, 'customer.salutation', DataType::$STRING, false),
+            new AttributeType(null, 'customer.fullname', DataType::$STRING, false),
+            new AttributeType(null, 'customer.firstname', DataType::$STRING, false),
+            new AttributeType(null, 'customer.lastname', DataType::$STRING, false),
+            new AttributeType(null, 'customer.id', DataType::$STRING, false),
+            new AttributeType(null, 'order.items', DataType::$JSON, false),
+            new AttributeType(null, 'shipping.address.salutation', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.firstname', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.lastname', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.phone', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.region', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.city', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.country', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.zip', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.street', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.salutation', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.firstname', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.lastname', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.phone', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.region', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.city', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.country', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.zip', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.street', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.id', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.name', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.url', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.image_url', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.tracking.code', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.tracking.url', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.status', DataType::$STRING, false)
         );
 
-        $transactionsService = new TransactionsService($maileon_config);
+        $attributes = $this->addGenericFields($attributes);
 
-        if ($this->print_curl == 'yes') {
-            $transactionsService->setDebug(true);
-        } else {
-            $transactionsService->setDebug(false);
-        }
-
-        $transactionType = new TransactionType();
-        $transactionType->name = 'magento_orders_extended_v2';
-
-        $transactionType->attributes = array(
-            new AttributeType(null, 'order.id', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.date', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'order.status', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.estimated_delivery_time', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.estimated_delivery_date', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'order.product_ids', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.categories', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.brands', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'order.total', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'order.total_no_shipping', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'order.total_tax', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'order.total_fees', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'order.total_refunds', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'order.fees', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'order.refunds', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'order.currency', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.method.id', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.method.name', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.method.url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.method.image_url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.method.data', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'payment.due_date', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'payment.status', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'discount.code', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'discount.total', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'discount.rules', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'discount.rules_string', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.salutation', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.fullname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.firstname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.lastname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.id', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.id', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.title', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.description', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.short_description', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.review', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.release_date', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'product.total', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.single_price', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.sku', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.quantity', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.image_url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.categories', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.attributes', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'product.brand', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.color', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.weight', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.width', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.height', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.generic.string_1', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.generic.string_2', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.generic.string_3', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.generic.string_4', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.generic.string_5', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'product.generic.double_1', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'product.generic.double_2', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'product.generic.double_3', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'product.generic.integer_1', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'product.generic.integer_2', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'product.generic.integer_3', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'product.generic.boolean_1', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'product.generic.boolean_2', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'product.generic.boolean_3', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'product.generic.date_1', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'product.generic.date_2', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'product.generic.date_3', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'product.generic.timestamp_1', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'product.generic.timestamp_2', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'product.generic.timestamp_3', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'product.generic.json_1', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'product.generic.json_2', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'product.generic.json_3', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'shipping.address.salutation', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.firstname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.lastname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.phone', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.region', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.city', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.country', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.zip', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.address.street', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.salutation', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.firstname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.lastname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.phone', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.region', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.city', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.country', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.zip', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'billing.address.street', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.id', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.name', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.image_url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.tracking.code', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.service.tracking.url', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'shipping.status', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_1', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_2', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_3', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_4', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_5', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_6', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_7', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_8', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_9', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_10', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.double_1', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_2', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_3', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_4', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_5', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.integer_1', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_2', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_3', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_4', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_5', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.boolean_1', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_2', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_3', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_4', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_5', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.date_1', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'generic.date_2', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'generic.date_3', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'generic.timestamp_1', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'generic.timestamp_2', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'generic.timestamp_3', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'generic.json_1', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'generic.json_2', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'generic.json_3', TransactionsDataType::$JSON, false)
-        );
-
-        $transactionsService->createTransactionType($transactionType);
-
-        $existsTransactionType = $transactionsService->getTransactionTypeByName('magento_orders_extended_v2');
-
-        if ($existsTransactionType->getStatusCode() === 404) {
-            return false;
-        } else {
-            return $existsTransactionType;
-        }
+        return $attributes;
     }
 
-    /**
-     * Make Maileon transaction type for Magento abandoned carts
-     *
-     * @return object TransactionType
-     */
-
-    public function setTransactionTypeAbandoned()
+    private function getOrderExtendedTransactionType()
     {
-
-        $maileon_config = array(
-            'BASE_URI' => 'https://api.maileon.com/1.0',
-            'API_KEY' => $this->apikey,
-            'TIMEOUT' => 15
+        $attributes = array(
+            new AttributeType(null, 'order.id', DataType::$STRING, false),
+            new AttributeType(null, 'order.date', DataType::$TIMESTAMP, false),
+            new AttributeType(null, 'order.status', DataType::$STRING, false),
+            new AttributeType(null, 'order.estimated_delivery_time', DataType::$STRING, false),
+            new AttributeType(null, 'order.estimated_delivery_date', DataType::$DATE, false),
+            new AttributeType(null, 'order.product_ids', DataType::$STRING, false),
+            new AttributeType(null, 'order.categories', DataType::$STRING, false),
+            new AttributeType(null, 'order.brands', DataType::$STRING, false),
+            new AttributeType(null, 'order.total', DataType::$FLOAT, false),
+            new AttributeType(null, 'order.total_no_shipping', DataType::$FLOAT, false),
+            new AttributeType(null, 'order.total_tax', DataType::$FLOAT, false),
+            new AttributeType(null, 'order.total_fees', DataType::$FLOAT, false),
+            new AttributeType(null, 'order.total_refunds', DataType::$FLOAT, false),
+            new AttributeType(null, 'order.fees', DataType::$JSON, false),
+            new AttributeType(null, 'order.refunds', DataType::$JSON, false),
+            new AttributeType(null, 'order.currency', DataType::$STRING, false),
+            new AttributeType(null, 'payment.method.id', DataType::$STRING, false),
+            new AttributeType(null, 'payment.method.name', DataType::$STRING, false),
+            new AttributeType(null, 'payment.method.url', DataType::$STRING, false),
+            new AttributeType(null, 'payment.method.image_url', DataType::$STRING, false),
+            new AttributeType(null, 'payment.method.data', DataType::$STRING, false),
+            new AttributeType(null, 'payment.due_date', DataType::$DATE, false),
+            new AttributeType(null, 'payment.status', DataType::$STRING, false),
+            new AttributeType(null, 'discount.code', DataType::$STRING, false),
+            new AttributeType(null, 'discount.total', DataType::$STRING, false),
+            new AttributeType(null, 'discount.rules', DataType::$JSON, false),
+            new AttributeType(null, 'discount.rules_string', DataType::$STRING, false),
+            new AttributeType(null, 'customer.salutation', DataType::$STRING, false),
+            new AttributeType(null, 'customer.fullname', DataType::$STRING, false),
+            new AttributeType(null, 'customer.firstname', DataType::$STRING, false),
+            new AttributeType(null, 'customer.lastname', DataType::$STRING, false),
+            new AttributeType(null, 'customer.id', DataType::$STRING, false),
+            new AttributeType(null, 'product.id', DataType::$STRING, false),
+            new AttributeType(null, 'product.title', DataType::$STRING, false),
+            new AttributeType(null, 'product.description', DataType::$STRING, false),
+            new AttributeType(null, 'product.short_description', DataType::$STRING, false),
+            new AttributeType(null, 'product.review', DataType::$STRING, false),
+            new AttributeType(null, 'product.release_date', DataType::$DATE, false),
+            new AttributeType(null, 'product.total', DataType::$STRING, false),
+            new AttributeType(null, 'product.single_price', DataType::$STRING, false),
+            new AttributeType(null, 'product.sku', DataType::$STRING, false),
+            new AttributeType(null, 'product.quantity', DataType::$STRING, false),
+            new AttributeType(null, 'product.image_url', DataType::$STRING, false),
+            new AttributeType(null, 'product.url', DataType::$STRING, false),
+            new AttributeType(null, 'product.categories', DataType::$STRING, false),
+            new AttributeType(null, 'product.attributes', DataType::$JSON, false),
+            new AttributeType(null, 'product.brand', DataType::$STRING, false),
+            new AttributeType(null, 'product.color', DataType::$STRING, false),
+            new AttributeType(null, 'product.weight', DataType::$STRING, false),
+            new AttributeType(null, 'product.width', DataType::$STRING, false),
+            new AttributeType(null, 'product.height', DataType::$STRING, false),
+            new AttributeType(null, 'product.generic.string_1', DataType::$STRING, false),
+            new AttributeType(null, 'product.generic.string_2', DataType::$STRING, false),
+            new AttributeType(null, 'product.generic.string_3', DataType::$STRING, false),
+            new AttributeType(null, 'product.generic.string_4', DataType::$STRING, false),
+            new AttributeType(null, 'product.generic.string_5', DataType::$STRING, false),
+            new AttributeType(null, 'product.generic.double_1', DataType::$FLOAT, false),
+            new AttributeType(null, 'product.generic.double_2', DataType::$FLOAT, false),
+            new AttributeType(null, 'product.generic.double_3', DataType::$FLOAT, false),
+            new AttributeType(null, 'product.generic.integer_1', DataType::$INTEGER, false),
+            new AttributeType(null, 'product.generic.integer_2', DataType::$INTEGER, false),
+            new AttributeType(null, 'product.generic.integer_3', DataType::$INTEGER, false),
+            new AttributeType(null, 'product.generic.boolean_1', DataType::$BOOLEAN, false),
+            new AttributeType(null, 'product.generic.boolean_2', DataType::$BOOLEAN, false),
+            new AttributeType(null, 'product.generic.boolean_3', DataType::$BOOLEAN, false),
+            new AttributeType(null, 'product.generic.date_1', DataType::$DATE, false),
+            new AttributeType(null, 'product.generic.date_2', DataType::$DATE, false),
+            new AttributeType(null, 'product.generic.date_3', DataType::$DATE, false),
+            new AttributeType(null, 'product.generic.timestamp_1', DataType::$TIMESTAMP, false),
+            new AttributeType(null, 'product.generic.timestamp_2', DataType::$TIMESTAMP, false),
+            new AttributeType(null, 'product.generic.timestamp_3', DataType::$TIMESTAMP, false),
+            new AttributeType(null, 'product.generic.json_1', DataType::$JSON, false),
+            new AttributeType(null, 'product.generic.json_2', DataType::$JSON, false),
+            new AttributeType(null, 'product.generic.json_3', DataType::$JSON, false),
+            new AttributeType(null, 'shipping.address.salutation', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.firstname', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.lastname', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.phone', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.region', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.city', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.country', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.zip', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.address.street', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.salutation', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.firstname', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.lastname', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.phone', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.region', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.city', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.country', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.zip', DataType::$STRING, false),
+            new AttributeType(null, 'billing.address.street', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.id', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.name', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.url', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.image_url', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.tracking.code', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.service.tracking.url', DataType::$STRING, false),
+            new AttributeType(null, 'shipping.status', DataType::$STRING, false)
         );
 
-        $transactionsService = new TransactionsService($maileon_config);
+        $attributes = $this->addGenericFields($attributes);
 
-        if ($this->print_curl == 'yes') {
-            $transactionsService->setDebug(true);
-        } else {
-            $transactionsService->setDebug(false);
-        }
+        return $attributes;
+    }
 
-        $transactionType = new TransactionType();
-        $transactionType->name = 'magento_abandoned_carts_v2';
-
-        $transactionType->attributes = array(
-            new AttributeType(null, 'cart.id', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'cart.date', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'cart.items', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'cart.product_ids', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'cart.categories', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'cart.brands', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'cart.total', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'cart.total_no_shipping', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'cart.total_tax', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'cart.total_fees', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'cart.total_refunds', TransactionsDataType::$FLOAT, false),
-            new AttributeType(null, 'cart.fees', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'cart.refunds', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'cart.currency', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'discount.code', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'discount.total', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'discount.rules', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'discount.rules_string', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.salutation', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.fullname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.firstname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.lastname', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'customer.id', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_1', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_2', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_3', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_4', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_5', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_6', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_7', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_8', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_9', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.string_10', TransactionsDataType::$STRING, false),
-            new AttributeType(null, 'generic.double_1', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_2', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_3', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_4', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.double_5', TransactionsDataType::$DOUBLE, false),
-            new AttributeType(null, 'generic.integer_1', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_2', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_3', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_4', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.integer_5', TransactionsDataType::$INTEGER, false),
-            new AttributeType(null, 'generic.boolean_1', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_2', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_3', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_4', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.boolean_5', TransactionsDataType::$BOOLEAN, false),
-            new AttributeType(null, 'generic.date_1', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'generic.date_2', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'generic.date_3', TransactionsDataType::$DATE, false),
-            new AttributeType(null, 'generic.timestamp_1', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'generic.timestamp_2', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'generic.timestamp_3', TransactionsDataType::$TIMESTAMP, false),
-            new AttributeType(null, 'generic.json_1', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'generic.json_2', TransactionsDataType::$JSON, false),
-            new AttributeType(null, 'generic.json_3', TransactionsDataType::$JSON, false)
+    private function getCartTransactionType()
+    {
+        $attributes = array(
+            new AttributeType(null, 'cart.id', DataType::$STRING, false),
+            new AttributeType(null, 'cart.date', DataType::$TIMESTAMP, false),
+            new AttributeType(null, 'cart.items', DataType::$JSON, false),
+            new AttributeType(null, 'cart.product_ids', DataType::$STRING, false),
+            new AttributeType(null, 'cart.categories', DataType::$STRING, false),
+            new AttributeType(null, 'cart.brands', DataType::$STRING, false),
+            new AttributeType(null, 'cart.total', DataType::$FLOAT, false),
+            new AttributeType(null, 'cart.total_no_shipping', DataType::$FLOAT, false),
+            new AttributeType(null, 'cart.total_tax', DataType::$FLOAT, false),
+            new AttributeType(null, 'cart.total_fees', DataType::$FLOAT, false),
+            new AttributeType(null, 'cart.total_refunds', DataType::$FLOAT, false),
+            new AttributeType(null, 'cart.fees', DataType::$JSON, false),
+            new AttributeType(null, 'cart.refunds', DataType::$JSON, false),
+            new AttributeType(null, 'cart.currency', DataType::$STRING, false),
+            new AttributeType(null, 'discount.code', DataType::$STRING, false),
+            new AttributeType(null, 'discount.total', DataType::$STRING, false),
+            new AttributeType(null, 'discount.rules', DataType::$JSON, false),
+            new AttributeType(null, 'discount.rules_string', DataType::$STRING, false),
+            new AttributeType(null, 'customer.salutation', DataType::$STRING, false),
+            new AttributeType(null, 'customer.fullname', DataType::$STRING, false),
+            new AttributeType(null, 'customer.firstname', DataType::$STRING, false),
+            new AttributeType(null, 'customer.lastname', DataType::$STRING, false),
+            new AttributeType(null, 'customer.id', DataType::$STRING, false),
         );
 
-        $transactionsService->createTransactionType($transactionType);
+        $attributes = $this->addGenericFields($attributes);
 
-        $existsTransactionType = $transactionsService->getTransactionTypeByName('magento_abandoned_carts_v2');
+        return $attributes;
+    }
 
-        if ($existsTransactionType->getStatusCode() === 404) {
-            return false;
-        } else {
-            return $existsTransactionType;
-        }
+    private function addGenericFields($attributes)
+    {
+        array_push($attributes, new AttributeType(null, 'generic.string_1', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'generic.string_2', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'generic.string_3', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'generic.string_4', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'generic.string_5', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'generic.string_6', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'generic.string_7', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'generic.string_8', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'generic.string_9', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'generic.string_10', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'generic.double_1', DataType::$DOUBLE, false));
+        array_push($attributes, new AttributeType(null, 'generic.double_2', DataType::$DOUBLE, false));
+        array_push($attributes, new AttributeType(null, 'generic.double_3', DataType::$DOUBLE, false));
+        array_push($attributes, new AttributeType(null, 'generic.double_4', DataType::$DOUBLE, false));
+        array_push($attributes, new AttributeType(null, 'generic.double_5', DataType::$DOUBLE, false));
+        array_push($attributes, new AttributeType(null, 'generic.integer_1', DataType::$INTEGER, false));
+        array_push($attributes, new AttributeType(null, 'generic.integer_2', DataType::$INTEGER, false));
+        array_push($attributes, new AttributeType(null, 'generic.integer_3', DataType::$INTEGER, false));
+        array_push($attributes, new AttributeType(null, 'generic.integer_4', DataType::$INTEGER, false));
+        array_push($attributes, new AttributeType(null, 'generic.integer_5', DataType::$INTEGER, false));
+        array_push($attributes, new AttributeType(null, 'generic.boolean_1', DataType::$BOOLEAN, false));
+        array_push($attributes, new AttributeType(null, 'generic.boolean_2', DataType::$BOOLEAN, false));
+        array_push($attributes, new AttributeType(null, 'generic.boolean_3', DataType::$BOOLEAN, false));
+        array_push($attributes, new AttributeType(null, 'generic.boolean_4', DataType::$BOOLEAN, false));
+        array_push($attributes, new AttributeType(null, 'generic.boolean_5', DataType::$BOOLEAN, false));
+        array_push($attributes, new AttributeType(null, 'generic.date_1', DataType::$DATE, false));
+        array_push($attributes, new AttributeType(null, 'generic.date_2', DataType::$DATE, false));
+        array_push($attributes, new AttributeType(null, 'generic.date_3', DataType::$DATE, false));
+        array_push(
+            $attributes,
+            new AttributeType(null, 'generic.timestamp_1', DataType::$TIMESTAMP, false)
+        );
+        array_push(
+            $attributes,
+            new AttributeType(null, 'generic.timestamp_2', DataType::$TIMESTAMP, false)
+        );
+        array_push(
+            $attributes,
+            new AttributeType(null, 'generic.timestamp_3', DataType::$TIMESTAMP, false)
+        );
+        array_push($attributes, new AttributeType(null, 'generic.json_1', DataType::$JSON, false));
+        array_push($attributes, new AttributeType(null, 'generic.json_2', DataType::$JSON, false));
+        array_push($attributes, new AttributeType(null, 'generic.json_3', DataType::$JSON, false));
+
+        return $attributes;
     }
 
     /**
@@ -454,27 +426,19 @@ class TransactionCreate
         $standard_fields = array(),
         $custom_fields = array()
     ) {
+        $transactionsService = new TransactionsService($this->maileon_config);
+        $transactionsService->setDebug($this->print_curl);
 
-        $logger = \Magento\Framework\App\ObjectManager::getInstance()->get('\Psr\Log\LoggerInterface');
+        $existsTransactionType = $this->existsTransactionType('magento_abandoned_carts_v2');
 
-        $maileon_config = array(
-            'BASE_URI' => 'https://api.maileon.com/1.0',
-            'API_KEY' => $this->apikey,
-            'TIMEOUT' => 15
-        );
+        if (!$existsTransactionType) {
+            $transactionType = $this->setTransactionType('magento_abandoned_carts_v2');
 
-        $transactionsService = new TransactionsService($maileon_config);
-
-        if ($this->print_curl == 'yes') {
-            $transactionsService->setDebug(true);
-        } else {
-            $transactionsService->setDebug(false);
-        }
-
-        $existsTransactionType = $transactionsService->getTransactionTypeByName('magento_abandoned_carts_v2');
-
-        if ($existsTransactionType->getStatusCode() === 404) {
-            $existsTransactionType = $this->setTransactionTypeAbandoned();
+            if (!$transactionType) {
+                $this->logger->error(
+                    'Error in TransactionType creation!'
+                );
+            }
         }
 
         $transaction = new Transaction();
@@ -489,9 +453,9 @@ class TransactionCreate
 
             if ($response) {
                 $transaction->contact->email = $email;
-                $logger->info('Contact subscribe Done!');
+                $this->logger->info('Contact subscribe Done!');
             } else {
-                $logger->debug('Contact subscribe Failed!');
+                $this->logger->debug('Contact subscribe Failed!');
             }
         }
 
@@ -502,7 +466,7 @@ class TransactionCreate
         $result = $transactionsService->createTransactions(array($transaction), true, false);
 
         if (!$result->isSuccess()) {
-            $logger->debug("Failed sending to: " . $email . ". Debug information: " . $result->getBodyData());
+            $this->logger->debug("Failed sending to: " . $email . ". Debug information: " . $result->getBodyData());
             return false;
         } else {
             return $result;
