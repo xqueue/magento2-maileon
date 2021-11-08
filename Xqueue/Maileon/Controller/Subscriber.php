@@ -146,6 +146,8 @@ class Subscriber
         } else {
             $logger->info('Newsletter module inactive!');
         }
+
+        return $result;
     }
 
     private function emailIsExists(string $email)
