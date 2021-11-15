@@ -4,7 +4,7 @@
 
     <preference for="Xqueue\Maileon\Api\MaileonWebhookInterface" type="Xqueue\Maileon\Model\Api\MaileonWebhook"/>
 
-    <preference for="Xqueue\Maileon\Api\MaileonTestInterface" type="Xqueue\Maileon\Model\Api\MaileonTest"/>
+    <preference for="Xqueue\Maileon\Api\MaileonTestAbandonedCartsInterface" type="Xqueue\Maileon\Model\Api\MaileonTestAbandonedCarts"/>
 
     <type name="Xqueue\Maileon\Logger\Handler">
         <arguments>

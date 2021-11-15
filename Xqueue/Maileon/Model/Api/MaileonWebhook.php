@@ -4,6 +4,7 @@ namespace Xqueue\Maileon\Model\Api;
  
 use Psr\Log\LoggerInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
  
 class MaileonWebhook
 {
@@ -44,6 +45,13 @@ class MaileonWebhook
             if (!empty($email) && !empty($token)) {
                 if ($token == $unsubscribe_token) {
                     if (!empty($storeview_id)) {
+                        try {
+                            $store = $this->storeManager->getStore((string) $storeview_id);
+                        } catch (NoSuchEntityException $e) {
+                            $response = ['success' => false, 'message' => (string) $e->getMessage()];
+                            return json_encode($response);
+                        }
+
                         $this->storeManager->setCurrentStore((string) $storeview_id);
 
                         $subscriber = $this->subscriber->loadByEmail($email);
@@ -101,8 +109,8 @@ class MaileonWebhook
                 $response = ['success' => false, 'message' => 'Empty email or token params!'];
             }
         } catch (\Exception $e) {
-            $response = ['success' => false, 'message' => $e->getMessage()];
-            $this->logger->info($e->getMessage());
+            $response = ['success' => false, 'message' => (string) $e->getMessage()];
+            $this->logger->info((string) $e->getMessage());
         }
 
         $returnArray = json_encode($response);
@@ -128,6 +136,13 @@ class MaileonWebhook
             if (!empty($email) && !empty($token)) {
                 if ($token == $doi_token) {
                     if (!empty($storeview_id)) {
+                        try {
+                            $store = $this->storeManager->getStore((string) $storeview_id);
+                        } catch (NoSuchEntityException $e) {
+                            $response = ['success' => false, 'message' => (string) $e->getMessage()];
+                            return json_encode($response);
+                        }
+                        
                         $this->storeManager->setCurrentStore((string) $storeview_id);
                     }
 
@@ -148,8 +163,8 @@ class MaileonWebhook
                 $response = ['success' => false, 'message' => 'Empty email or token params!'];
             }
         } catch (\Exception $e) {
-            $response = ['success' => false, 'message' => $e->getMessage()];
-            $this->logger->info($e->getMessage());
+            $response = ['success' => false, 'message' => (string) $e->getMessage()];
+            $this->logger->info((string) $e->getMessage());
         }
 
         $returnArray = json_encode($response);

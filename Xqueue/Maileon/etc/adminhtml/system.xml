@@ -77,7 +77,7 @@
                 </field>
             </group>
             <group id="orders" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Oders Confirmation Settings</label>
+                <label>Orders Confirmation Settings</label>
                 <field id="active_modul" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Active</label>
                     <comment>Enable this module?</comment>
@@ -117,6 +117,14 @@
                 <field id="email_override" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Email Override</label>
                     <comment>If this is populated, customers will not recieve shopping cart folowup emails. Instead mails will be routed to this address. Default [blank].</comment>
+                </field>
+                <field id="active_test_webhook" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Test Webhook Active</label>
+                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                </field>
+                <field id="test_webhook_token" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Test Webhook Token</label>
+                    <comment>This is the token that has to be passed as a parameter with the call of the abandoned cart test webhook. Use parameter token=</comment>
                 </field>
             </group>
         </section>

@@ -5,7 +5,7 @@ namespace Xqueue\Maileon\Model\Api;
 use Magento\Store\Model\ScopeInterface;
 use Xqueue\Maileon\Model\Maileon\TransactionCreate;
  
-class MaileonTest
+class MaileonTestAbandonedCarts
 {
     protected $logger;
 
@@ -43,7 +43,7 @@ class MaileonTest
      * @inheritdoc
      */
  
-    public function testMarkAbandonedCarts()
+    public function testMarkAbandonedCarts($token)
     {
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
@@ -51,7 +51,23 @@ class MaileonTest
             ->get('Magento\Framework\App\Config\ScopeConfigInterface')
             ->getValue('syncplugin/abandoned_cart/active_modul', ScopeInterface::SCOPE_STORE);
 
+        $test_webhook_enabled = $objectManager
+            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
+            ->getValue('syncplugin/abandoned_cart/active_test_webhook', ScopeInterface::SCOPE_STORE);
+
+        $test_webhook_token = $objectManager
+            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
+            ->getValue('syncplugin/abandoned_cart/test_webhook_token', ScopeInterface::SCOPE_STORE);
+
         if (empty($module_enabled) || $module_enabled == 'no') {
+            return false;
+        }
+
+        if (empty($test_webhook_enabled) || $test_webhook_enabled == 'no') {
+            return false;
+        }
+
+        if ($token !== $test_webhook_token) {
             return false;
         }
 
@@ -184,7 +200,7 @@ class MaileonTest
      * @inheritdoc
      */
  
-    public function testSendAbandonedCartsEmails()
+    public function testSendAbandonedCartsEmails($token)
     {
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
@@ -212,11 +228,27 @@ class MaileonTest
             ->get('Magento\Framework\App\Config\ScopeConfigInterface')
             ->getValue('syncplugin/abandoned_cart/email_override', ScopeInterface::SCOPE_STORE);
 
+        $test_webhook_enabled = $objectManager
+            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
+            ->getValue('syncplugin/abandoned_cart/active_test_webhook', ScopeInterface::SCOPE_STORE);
+
+        $test_webhook_token = $objectManager
+            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
+            ->getValue('syncplugin/abandoned_cart/test_webhook_token', ScopeInterface::SCOPE_STORE);
+
         if (empty($module_enabled) || $module_enabled == 'no') {
             return false;
         }
 
         if (empty($apikey) || empty($permission)) {
+            return false;
+        }
+
+        if (empty($test_webhook_enabled) || $test_webhook_enabled == 'no') {
+            return false;
+        }
+
+        if ($token !== $test_webhook_token) {
             return false;
         }
 
