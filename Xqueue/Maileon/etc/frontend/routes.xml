@@ -1,4 +1,5 @@
 <?xml version="1.0" ?>
+<!-- This config is deprecated since 1.0.5 and only still here due to backwards compatibility, see ../webapi.xml -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:App/etc/routes.xsd">
     <router id="standard">
         <route frontName="maileon_webhook" id="maileon_webhook">
