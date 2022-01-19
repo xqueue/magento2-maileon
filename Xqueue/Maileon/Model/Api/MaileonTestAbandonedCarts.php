@@ -331,6 +331,7 @@ class MaileonTestAbandonedCarts
                         $item['title'] = $cartItem->getName();
                         $item['url'] = $product->getProductUrl();
                         $item['image_url'] = htmlspecialchars($image_url, ENT_QUOTES, "UTF-8");
+                        $item['thumbnail'] = htmlspecialchars($product->getThumbnail(), ENT_QUOTES, "UTF-8");
                         $item['quantity'] = (int) $cartItem->getQty();
                         $item['single_price'] = $item_single_price;
                         $item['total'] = $item_total;
