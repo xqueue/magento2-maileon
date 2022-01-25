@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="maileon_queue" resource="default" engine="innodb" comment="Queue Table">
+        <column xsi:type="int" name="id" unsigned="true" nullable="false" identity="true" comment="Queue ID"/>
+        <column xsi:type="text" name="recipient_name" nullable="false" comment="Recipient Name"/>
+        <column xsi:type="text" name="recipient_email" nullable="false" comment="Recipient Email"/>
+        <column xsi:type="text" name="store_id" nullable="false" comment="Store ID"/>
+        <column xsi:type="text" name="product_ids" nullable="false" comment="Product IDs"/>
+        <column xsi:type="text" name="category_ids" nullable="false" comment="Category IDs"/>
+        <column xsi:type="int" name="customer_id" nullable="false" comment="Customer ID"/>
+        <column xsi:type="int" name="quote_id" nullable="false" comment="Quote ID"/>
+        <column xsi:type="timestamp" name="created_at" comment="Post Created At"/>
+        <column xsi:type="timestamp" name="updated_at" comment="Post Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+    </table>
+    <table name="maileon_log" resource="default" engine="innodb" comment="Log Table">
+        <column xsi:type="int" name="id" unsigned="true" nullable="false" identity="true" comment="Log ID"/>
+        <column xsi:type="timestamp" name="sent_at" comment="Sent At"/>
+        <column xsi:type="text" name="sender_name" nullable="false" comment="Sender Name"/>
+        <column xsi:type="text" name="sender_email" nullable="false" comment="Sender Email"/>
+        <column xsi:type="text" name="recipient_name" nullable="false" comment="Recipient Name"/>
+        <column xsi:type="text" name="recipient_email" nullable="false" comment="Recipient Email"/>
+        <column xsi:type="text" name="product_ids" nullable="false" comment="Product IDs"/>
+        <column xsi:type="text" name="category_ids" nullable="false" comment="Category IDs"/>
+        <column xsi:type="int" name="customer_id" nullable="false" comment="Customer ID"/>
+        <column xsi:type="text" name="sent_count" nullable="false" comment="Sent count"/>
+        <column xsi:type="text" name="template_id" nullable="false" comment="Template ID"/>
+        <column xsi:type="int" name="quote_id" nullable="false" comment="Quote ID"/>
+        <column xsi:type="int" name="store_id" nullable="false" comment="Store ID"/>
+        <column xsi:type="timestamp" name="created_at" comment="Post Created At"/>
+        <column xsi:type="timestamp" name="updated_at" comment="Post Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+    </table>
+</schema>
