@@ -7,22 +7,49 @@ use Xqueue\Maileon\Model\Maileon\TransactionCreate;
  
 class MaileonTestAbandonedCarts
 {
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
     protected $logger;
 
-    protected $_logFactory;
+    /**
+     * @var \Magento\Store\Model\App\Emulation
+     */
+    protected $appEmulation;
 
-    protected $_queueFactory;
+    /**
+     * @var \Xqueue\Maileon\Model\LogFactory
+     */
+    protected $logFactory;
 
-    protected $_quoteFactory;
+    /**
+     * @var \Xqueue\Maileon\Model\QueueFactory
+     */
+    protected $queueFactory;
 
-    protected $_storeManager;
+    /**
+     * @var \Magento\Quote\Model\QuoteFactory
+     */
+    protected $quoteFactory;
 
+    /**
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
+     * @var \Xqueue\Maileon\Helper\External\Data
+     */
     protected $helper;
 
-    protected $_messageManager;
+    /**
+     * @var \Magento\Framework\Message\ManagerInterface
+     */
+    protected $messageManager;
  
     public function __construct(
         \Psr\Log\LoggerInterface $logger,
+        \Magento\Store\Model\App\Emulation $appEmulation,
         \Xqueue\Maileon\Model\LogFactory $logFactory,
         \Xqueue\Maileon\Model\QueueFactory $queueFactory,
         \Magento\Quote\Model\QuoteFactory $quoteFactory,
@@ -31,12 +58,13 @@ class MaileonTestAbandonedCarts
         \Magento\Framework\Message\ManagerInterface $messageManager
     ) {
         $this->logger = $logger;
-        $this->_logFactory = $logFactory;
-        $this->_queueFactory = $queueFactory;
-        $this->_quoteFactory = $quoteFactory;
-        $this->_storeManager = $storeManager;
+        $this->appEmulation = $appEmulation;
+        $this->logFactory = $logFactory;
+        $this->queueFactory = $queueFactory;
+        $this->quoteFactory = $quoteFactory;
+        $this->storeManager = $storeManager;
         $this->helper = $helper;
-        $this->_messageManager = $messageManager;
+        $this->messageManager = $messageManager;
     }
  
     /**
@@ -150,7 +178,7 @@ class MaileonTestAbandonedCarts
                     }
 
                     // New logic for finding most recent reminder and compare if this one is older than the last check
-                    $logModel = $this->_logFactory->create();
+                    $logModel = $this->logFactory->create();
                     $abandonedcartsCollection = $logModel->getCollection();
                     $abandonedcartsModel = $abandonedcartsCollection
                         ->addFieldToFilter('customer_id', $cart['customer_id'])
@@ -179,7 +207,7 @@ class MaileonTestAbandonedCarts
                     $queueModel->setQuoteId($cart['quote_id']);
                     $queueModel->save();
                 } catch (\Magento\Framework\Exception\LocalizedException $e) {
-                    $this->_messageManager->addExceptionMessage(
+                    $this->messageManager->addExceptionMessage(
                         $e,
                         __('There was a problem with searching abandoned carts: %1', $e->getMessage())
                     );
@@ -189,7 +217,7 @@ class MaileonTestAbandonedCarts
             $returnArray = json_encode($response);
             return $returnArray;
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
-            $this->_messageManager->addExceptionMessage(
+            $this->messageManager->addExceptionMessage(
                 $e,
                 __('There was a problem with searching abandoned carts: %1', $e->getMessage())
             );
@@ -254,7 +282,7 @@ class MaileonTestAbandonedCarts
 
         try {
             // Load Abandonedcarts Customer   $objectManager->get('Xqueue\Maileon\Model\Queue');
-            $queueModel = $this->_queueFactory->create();
+            $queueModel = $this->queueFactory->create();
             $abandonedcartsCustomers = $queueModel->getCollection();
 
             foreach ($abandonedcartsCustomers as $abandonedcartsCustomer) {
@@ -277,7 +305,7 @@ class MaileonTestAbandonedCarts
                         }
                     }
 
-                    $quoteModel = $this->_quoteFactory->create();
+                    $quoteModel = $this->quoteFactory->create();
                     $quoteModelCollection = $quoteModel
                         ->getCollection()
                         ->addFieldToFilter('entity_id', $abandonedcartsCustomer->getQuoteId());
@@ -298,6 +326,14 @@ class MaileonTestAbandonedCarts
 
                     $imagewidth = 200;
                     $imageheight = 200;
+
+                    // Emulate the frontend for the correct image urls, that need only in API
+                    $this->appEmulation->startEnvironmentEmulation(
+                        $storeId,
+                        \Magento\Framework\App\Area::AREA_FRONTEND,
+                        true
+                    );
+
                     $imageHelper = $objectManager->get('\Magento\Catalog\Helper\Image');
 
                     foreach ($cartItems as $cartItem) {
@@ -310,6 +346,8 @@ class MaileonTestAbandonedCarts
                             ->setImageFile($product->getFile())
                             ->resize($imagewidth, $imageheight)
                             ->getUrl();
+
+                        $thumbnail_url = $imageHelper->init($product, 'product_thumbnail_image')->getUrl();
 
                         $item_total = number_format(
                             doubleval($cartItem->getPriceInclTax() * intval($cartItem->getQty())),
@@ -331,7 +369,7 @@ class MaileonTestAbandonedCarts
                         $item['title'] = $cartItem->getName();
                         $item['url'] = $product->getProductUrl();
                         $item['image_url'] = htmlspecialchars($image_url, ENT_QUOTES, "UTF-8");
-                        $item['thumbnail'] = htmlspecialchars($product->getThumbnail(), ENT_QUOTES, "UTF-8");
+                        $item['thumbnail'] = htmlspecialchars($thumbnail_url, ENT_QUOTES, "UTF-8");
                         $item['quantity'] = (int) $cartItem->getQty();
                         $item['single_price'] = $item_single_price;
                         $item['total'] = $item_total;
@@ -356,6 +394,9 @@ class MaileonTestAbandonedCarts
                             }
                         }
                     }
+
+                    // End emulation
+                    $this->appEmulation->stopEnvironmentEmulation();
 
                     $cart_total = (double)number_format(doubleval($quote['grand_total']), 2, '.', '');
                     $cart_total_tax = (double)number_format(
@@ -425,7 +466,7 @@ class MaileonTestAbandonedCarts
                     // Remove from queue
                     $abandonedcartsCustomer->delete();
                 } catch (\Magento\Framework\Exception\LocalizedException $e) {
-                    $this->_messageManager->addExceptionMessage(
+                    $this->messageManager->addExceptionMessage(
                         $e,
                         __('There was a problem with send abandoned carts transaction: %1', $e->getMessage())
                     );
@@ -434,7 +475,7 @@ class MaileonTestAbandonedCarts
 
             return true;
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
-            $this->_messageManager->addExceptionMessage(
+            $this->messageManager->addExceptionMessage(
                 $e,
                 __('There was a problem with get abandoned carts: %1', $e->getMessage())
             );

@@ -128,6 +128,8 @@ class SendAbandonedCartsEmails
                             ->resize($imagewidth, $imageheight)
                             ->getUrl();
 
+                        $thumbnail_url = $imageHelper->init($product, 'product_thumbnail_image')->getUrl();
+
                         $item_total = number_format(
                             doubleval($cartItem->getPriceInclTax() * intval($cartItem->getQty())),
                             2,
@@ -148,7 +150,7 @@ class SendAbandonedCartsEmails
                         $item['title'] = $cartItem->getName();
                         $item['url'] = $product->getProductUrl();
                         $item['image_url'] = htmlspecialchars($image_url, ENT_QUOTES, "UTF-8");
-                        $item['thumbnail'] = htmlspecialchars($product->getThumbnail(), ENT_QUOTES, "UTF-8");
+                        $item['thumbnail'] = htmlspecialchars($thumbnail_url, ENT_QUOTES, "UTF-8");
                         $item['quantity'] = (int) $cartItem->getQty();
                         $item['single_price'] = $item_single_price;
                         $item['total'] = $item_total;

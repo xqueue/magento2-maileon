@@ -158,8 +158,8 @@ class ContactCreate
                 $maileon_response = $contacts_service->createContact(
                     $contact,
                     SynchronizationMode::$UPDATE,
-                    null,
-                    null,
+                    '',
+                    '',
                     $doiprocess,
                     $doiplusprocess,
                     $this->doikey
