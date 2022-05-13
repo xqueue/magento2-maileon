@@ -7,30 +7,57 @@ use Xqueue\Maileon\Model\Maileon\TransactionCreate;
 
 class SendAbandonedCartsEmails
 {
-    protected $_logger;
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
+    protected $logger;
 
-    protected $_queueFactory;
+    /**
+     * @var \Magento\Store\Model\App\Emulation
+     */
+    protected $appEmulation;
 
-    protected $_quoteFactory;
+    /**
+     * @var \Xqueue\Maileon\Model\QueueFactory
+     */
+    protected $queueFactory;
 
-    protected $_storeManager;
+    /**
+     * @var \Magento\Quote\Model\QuoteFactory
+     */
+    protected $quoteFactory;
 
+    /**
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
+     * @var \Xqueue\Maileon\Helper\External\Data
+     */
     protected $helper;
+
+    /**
+     * @var \Magento\Framework\Message\ManagerInterface
+     */
+    protected $messageManager;
 
     public function __construct(
         \Xqueue\Maileon\Logger\Logger $logger,
+        \Magento\Store\Model\App\Emulation $appEmulation,
         \Xqueue\Maileon\Model\QueueFactory $queueFactory,
         \Magento\Quote\Model\QuoteFactory $quoteFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Xqueue\Maileon\Helper\External\Data $helper,
         \Magento\Framework\Message\ManagerInterface $messageManager
     ) {
-        $this->_logger = $logger;
-        $this->_queueFactory = $queueFactory;
-        $this->_quoteFactory = $quoteFactory;
-        $this->_storeManager = $storeManager;
+        $this->logger = $logger;
+        $this->appEmulation = $appEmulation;
+        $this->queueFactory = $queueFactory;
+        $this->quoteFactory = $quoteFactory;
+        $this->storeManager = $storeManager;
         $this->helper = $helper;
-        $this->_messageManager = $messageManager;
+        $this->messageManager = $messageManager;
     }
 
     public function execute()
@@ -71,7 +98,7 @@ class SendAbandonedCartsEmails
 
         try {
             // Load Abandonedcarts Customer   $objectManager->get('Xqueue\Maileon\Model\Queue');
-            $queueModel = $this->_queueFactory->create();
+            $queueModel = $this->queueFactory->create();
             $abandonedcartsCustomers = $queueModel->getCollection();
 
             foreach ($abandonedcartsCustomers as $abandonedcartsCustomer) {
@@ -94,7 +121,7 @@ class SendAbandonedCartsEmails
                         }
                     }
 
-                    $quoteModel = $this->_quoteFactory->create();
+                    $quoteModel = $this->quoteFactory->create();
                     $quoteModelCollection = $quoteModel
                         ->getCollection()
                         ->addFieldToFilter('entity_id', $abandonedcartsCustomer->getQuoteId());
@@ -115,6 +142,14 @@ class SendAbandonedCartsEmails
 
                     $imagewidth = 200;
                     $imageheight = 200;
+
+                    // Emulate the frontend for the correct image urls
+                    $this->appEmulation->startEnvironmentEmulation(
+                        $storeId,
+                        \Magento\Framework\App\Area::AREA_FRONTEND,
+                        true
+                    );
+
                     $imageHelper = $objectManager->get('\Magento\Catalog\Helper\Image');
 
                     foreach ($cartItems as $cartItem) {
@@ -175,6 +210,9 @@ class SendAbandonedCartsEmails
                             }
                         }
                     }
+
+                    // End emulation
+                    $this->appEmulation->stopEnvironmentEmulation();
 
                     $cart_total = (float) number_format(doubleval($quote['grand_total']), 2, '.', '');
                     $cart_total_tax = (float) number_format(
@@ -244,7 +282,7 @@ class SendAbandonedCartsEmails
                     // Remove from queue
                     $abandonedcartsCustomer->delete();
                 } catch (\Magento\Framework\Exception\LocalizedException $e) {
-                    $this->_messageManager->addExceptionMessage(
+                    $this->messageManager->addExceptionMessage(
                         $e,
                         __('There was a problem with send abandoned carts transaction: %1', $e->getMessage())
                     );
@@ -253,7 +291,7 @@ class SendAbandonedCartsEmails
 
             return true;
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
-            $this->_messageManager->addExceptionMessage(
+            $this->messageManager->addExceptionMessage(
                 $e,
                 __('There was a problem with get abandoned carts: %1', $e->getMessage())
             );
