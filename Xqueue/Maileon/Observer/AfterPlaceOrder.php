@@ -133,6 +133,9 @@ class AfterPlaceOrder implements ObserverInterface
                 ''
             );
 
+            $payment = $order->getPayment();
+            $payment_additional_data = $payment->getAdditionalInformation();
+
             $content['order.id']                = $order->getId();
             $content['order.date']              = $order->getCreatedAt();
             $content['order.status']            = $order->getStatus();
@@ -141,6 +144,11 @@ class AfterPlaceOrder implements ObserverInterface
             $content['order.total_no_shipping'] = (float) $order_total_no_shipping;
             $content['order.currency']          = $order->getOrderCurrencyCode();
             $content['shipping.service.name']   = $order->getShippingMethod();
+            $content['payment.method.id']       = $payment->getMethod();
+
+            if (!empty($payment_additional_data) && array_key_exists('method_title', $payment_additional_data)) {
+                $content['payment.method.name'] = $payment_additional_data['method_title'];
+            }
             $items = array();
 
             // Product items
@@ -214,6 +222,12 @@ class AfterPlaceOrder implements ObserverInterface
                 $content_ext['order.total_no_shipping']    = (float) $order_total_no_shipping;
                 $content_ext['order.currency']             = $order->getOrderCurrencyCode();
                 $content_ext['shipping.service.name']      = $order->getShippingMethod();
+                $content_ext['payment.method.id']          = $payment->getMethod();
+            
+                if (!empty($payment_additional_data) && array_key_exists('method_title', $payment_additional_data)) {
+                    $content_ext['payment.method.name'] = $payment_additional_data['method_title'];
+                }
+                
                 $content_ext['product.id']                 = $item->getProductId();
                 $content_ext['product.title']              = $item->getName();
                 $content_ext['product.single_price']       = $item_single_price;
