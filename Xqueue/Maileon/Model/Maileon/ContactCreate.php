@@ -79,7 +79,7 @@ class ContactCreate
         $this->permission     = $permission;
         $this->doiprocess     = filter_var($doiprocess, FILTER_VALIDATE_BOOLEAN);
         $this->doiplusprocess = filter_var($doiplusprocess, FILTER_VALIDATE_BOOLEAN);
-        $this->doikey         = $doikey;
+        $this->doikey         = (string) $doikey;
         $this->print_curl     = filter_var($print_curl, FILTER_VALIDATE_BOOLEAN);
 
         $this->maileon_config = array(
