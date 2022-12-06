@@ -1,3 +1,7 @@
+# 1.8.11
+
+- Abandoned cart work with storeviews
+
 # 1.8.10
 
 - Update Maileon Php API client minimum version

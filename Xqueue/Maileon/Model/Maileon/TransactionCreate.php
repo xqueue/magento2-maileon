@@ -19,49 +19,66 @@ class TransactionCreate
 {
     /**
      * Maileon API key
-     * @var string $apikey
+     *
+     * @var string $apiKey
      */
-    private $apikey;
+    private $apiKey;
 
     /**
      * Print CURL debug data
-     * @var string $print_curl
+     *
+     * @var string $printCurl
      */
-    private $print_curl;
+    private $printCurl;
 
     /**
      * Maileon config
-     * @var array $maileon_config
+     *
+     * @var array $maileonConfig
      */
-    private $maileon_config;
+    private $maileonConfig;
 
+    /**
+     * Logger interface
+     *
+     * @var \Psr\Log\LoggerInterface
+     */
     private $logger;
 
 
     /**
-     * @param string $apikey   Maileon API key
+     * @param string $apiKey
+     * @param string $printCurl
      */
-    public function __construct($apikey, $print_curl)
+    public function __construct($apiKey, $printCurl)
     {
-        $this->apikey = $apikey;
-        $this->print_curl = filter_var($print_curl, FILTER_VALIDATE_BOOLEAN);
+        $this->apiKey = $apiKey;
+        $this->printCurl = filter_var($printCurl, FILTER_VALIDATE_BOOLEAN);
 
-        $this->maileon_config = array(
+        $this->maileonConfig = array(
             'BASE_URI' => 'https://api.maileon.com/1.0',
-            'API_KEY' => $this->apikey,
+            'API_KEY' => $this->apiKey,
             'TIMEOUT' => 35
         );
 
         $this->logger = \Magento\Framework\App\ObjectManager::getInstance()->get('\Psr\Log\LoggerInterface');
     }
 
+    /**
+     * Send order confirm transaction to Maileon
+     *
+     * @param string $email
+     * @param string $transaction_name
+     * @param array $content
+     * @return void
+     */
     public function sendOrderTransaction(
         $email,
         $transaction_name,
         $content
     ) {
-        $transactionsService = new TransactionsService($this->maileon_config);
-        $transactionsService->setDebug($this->print_curl);
+        $transactionsService = new TransactionsService($this->maileonConfig);
+        $transactionsService->setDebug($this->printCurl);
 
         $transaction = new Transaction();
         $transaction->contact = new ContactReference();
@@ -92,10 +109,16 @@ class TransactionCreate
         }
     }
 
+    /**
+     * Check transaction type is exist or not
+     *
+     * @param string $transaction_name
+     * @return boolean
+     */
     public function existsTransactionType($transaction_name)
     {
-        $transactionsService = new TransactionsService($this->maileon_config);
-        $transactionsService->setDebug($this->print_curl);
+        $transactionsService = new TransactionsService($this->maileonConfig);
+        $transactionsService->setDebug($this->printCurl);
 
         try {
             $existsTransactionType = $transactionsService->getTransactionTypeByName($transaction_name);
@@ -113,15 +136,14 @@ class TransactionCreate
     }
 
     /**
-     * Make Maileon transaction type for Magento
+     * Make Maileon transaction types for Magento
      *
-     * @return object TransactionType
+     * @return string $transaction_name
      */
-
     public function setTransactionType($transaction_name)
     {
-        $transactionsService = new TransactionsService($this->maileon_config);
-        $transactionsService->setDebug($this->print_curl);
+        $transactionsService = new TransactionsService($this->maileonConfig);
+        $transactionsService->setDebug($this->printCurl);
 
         $transactionType = new TransactionType();
         $transactionType->name = $transaction_name;
@@ -155,6 +177,11 @@ class TransactionCreate
         return $result->isSuccess();
     }
 
+    /**
+     * Create order transaction type fields
+     *
+     * @return array
+     */
     private function getOrderTransactionType()
     {
         $attributes = array(
@@ -223,6 +250,11 @@ class TransactionCreate
         return $attributes;
     }
 
+    /**
+     * Create order extended transaction type fields
+     *
+     * @return array
+     */
     private function getOrderExtendedTransactionType()
     {
         $attributes = array(
@@ -332,6 +364,11 @@ class TransactionCreate
         return $attributes;
     }
 
+    /**
+     * Create abandoned cart transaction type fields
+     *
+     * @return array
+     */
     private function getCartTransactionType()
     {
         $attributes = array(
@@ -365,6 +402,12 @@ class TransactionCreate
         return $attributes;
     }
 
+    /**
+     * Add generic fields to the transaction
+     *
+     * @param array $attributes
+     * @return array
+     */
     private function addGenericFields($attributes)
     {
         array_push($attributes, new AttributeType(null, 'generic.string_1', DataType::$STRING, false));
@@ -417,8 +460,13 @@ class TransactionCreate
     /**
      * Send abandoned cart transaction for Maileon
      *
+     * @param string $email
+     * @param array $content
+     * @param integer $permission
+     * @param array $standard_fields
+     * @param array $custom_fields
+     * @return boolean
      */
-
     public function sendAbandonedCartTransaction(
         $email,
         $content,
@@ -426,8 +474,8 @@ class TransactionCreate
         $standard_fields = array(),
         $custom_fields = array()
     ) {
-        $transactionsService = new TransactionsService($this->maileon_config);
-        $transactionsService->setDebug($this->print_curl);
+        $transactionsService = new TransactionsService($this->maileonConfig);
+        $transactionsService->setDebug($this->printCurl);
 
         $existsTransactionType = $this->existsTransactionType('magento_abandoned_carts_v2');
 
@@ -444,7 +492,7 @@ class TransactionCreate
         $transaction = new Transaction();
         $transaction->contact = new ContactReference();
 
-        $sync = new ContactCreate($this->apikey, $email, $permission, 'no', 'no', null, $this->print_curl);
+        $sync = new ContactCreate($this->apiKey, $email, $permission, 'no', 'no', null, $this->printCurl);
 
         if ($sync->maileonContactIsExists()) {
             $transaction->contact->email = $email;
@@ -467,17 +515,23 @@ class TransactionCreate
 
         if (!$result->isSuccess()) {
             $this->logger->debug("Failed sending to: " . $email . ". Debug information: " . $result->getBodyData());
-            return false;
-        } else {
-            return $result;
         }
+
+        return $result->isSuccess();
     }
 
     /**
      * Process abandoned cart reminder
      *
+     * @param string $email
+     * @param array $content
+     * @param integer $permission
+     * @param string $shadowEmail
+     * @param string $overrideEmail
+     * @param array $standard_fields
+     * @param array $custom_fields
+     * @return void
      */
-
     public function processAbandonedCartReminder(
         $email,
         $content,
