@@ -1,3 +1,7 @@
+# 1.8.12
+
+- Bugfix AfterPlaceOrder product categories
+
 # 1.8.11
 
 - Abandoned cart work with storeviews

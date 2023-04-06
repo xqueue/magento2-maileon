@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/Module/etc/module.xsd">
-    <module name="Xqueue_Maileon" setup_version="1.8.11">
+    <module name="Xqueue_Maileon" setup_version="1.8.12">
         <sequence>
             <module name="Magento_Backend"/>
         </sequence>

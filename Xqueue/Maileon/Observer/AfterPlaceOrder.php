@@ -161,6 +161,8 @@ class AfterPlaceOrder implements ObserverInterface
 
                 // Category data
                 $category_ids = $product->getCategoryIds();
+                $categories = [];
+                
                 foreach ($category_ids as $category) {
                     $cat = $objectManager->create('Magento\Catalog\Model\Category')->load($category);
                     $categories[] = $cat->getName();
