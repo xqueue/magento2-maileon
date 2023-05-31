@@ -94,6 +94,29 @@
                     <source_model>Xqueue\Maileon\Model\Config\ListPermission</source_model>
                 </field>
             </group>
+            <group id="customer_related_transactions" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Customer Related Email Notifications</label>
+                <field id="credentials_changed" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Customer credentials changed (password and/or email)</label>
+                    <comment>Send email notification from Maileon, when customer credentials changed</comment>
+                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                </field>
+                <field id="password_reminder" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Customer password reminder</label>
+                    <comment>Send customer password reminder email notification from Maileon</comment>
+                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                </field>
+                <field id="password_reset_confirm" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Customer password reset confirmation</label>
+                    <comment>Send customer password reset confirmation email notification from Maileon</comment>
+                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                </field>
+                <field id="new_account" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>New account</label>
+                    <comment>Send email with new account related information from Maileon</comment>
+                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                </field>
+            </group>
             <group id="abandoned_cart" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Abandoned Cart Configuration</label>
                 <field id="active_modul" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">

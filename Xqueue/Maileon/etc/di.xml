@@ -37,4 +37,8 @@
         <plugin name="MaileonSyncPluginModelSubscriber" type="Xqueue\Maileon\Model\Newsletter\Subscriber" sortOrder="1" disabled="false"/>
     </type>
 
+    <type name="Magento\Customer\Model\EmailNotification">
+        <plugin name="MaileonSyncPluginModelCustomerEmailNotification" type="Xqueue\Maileon\Model\Customer\EmailNotification" sortOrder="1"/>
+    </type>
+
 </config>

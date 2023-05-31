@@ -65,14 +65,14 @@ class TransactionCreate
     }
 
     /**
-     * Send order confirm transaction to Maileon
+     * Send transaction to Maileon
      *
      * @param string $email
      * @param string $transaction_name
      * @param array $content
      * @return void
      */
-    public function sendOrderTransaction(
+    public function sendTransaction(
         $email,
         $transaction_name,
         $content
@@ -159,6 +159,22 @@ class TransactionCreate
 
             case 'magento_abandoned_carts_v2':
                 $transactionType->attributes = $this->getCartTransactionType();
+                break;
+
+            case 'magento_account_credentials_changed_v1':
+                $transactionType->attributes = $this->getAccCredChangedTxType();
+                break;
+
+            case 'magento_password_reminder_v1':
+                $transactionType->attributes = $this->getPasswordReminderTxType();
+                break;
+
+            case 'magento_password_reset_confirmation_v1':
+                $transactionType->attributes = $this->getPasswordResetconfirmationrTxType();
+                break;
+
+            case 'magento_new_account_v1':
+                $transactionType->attributes = $this->getNewAccountTxType();
                 break;
 
             default:
@@ -398,6 +414,80 @@ class TransactionCreate
         );
 
         $attributes = $this->addGenericFields($attributes);
+
+        return $attributes;
+    }
+
+    /**
+     * Create account credentials changed transaction type fields
+     *
+     * @return array
+     */
+    private function getAccCredChangedTxType()
+    {
+        $attributes = array(
+            new AttributeType(null, 'fullname', DataType::$STRING, false),
+            new AttributeType(null, 'changed_field', DataType::$STRING, false),
+            new AttributeType(null, 'store_id', DataType::$STRING, false),
+            new AttributeType(null, 'store_name', DataType::$STRING, false),
+            new AttributeType(null, 'store_email', DataType::$STRING, false),
+            new AttributeType(null, 'store_phone', DataType::$STRING, false)
+        );
+
+        return $attributes;
+    }
+
+    /**
+     * Create password reminder transaction type fields
+     *
+     * @return array
+     */
+    private function getPasswordReminderTxType()
+    {
+        $attributes = array(
+            new AttributeType(null, 'fullname', DataType::$STRING, false),
+            new AttributeType(null, 'account_url', DataType::$STRING, false),
+            new AttributeType(null, 'psw_reset_url', DataType::$STRING, false),
+            new AttributeType(null, 'store_id', DataType::$STRING, false),
+            new AttributeType(null, 'store_name', DataType::$STRING, false)
+        );
+
+        return $attributes;
+    }
+
+    /**
+     * Create password reset confirmation transaction type fields
+     *
+     * @return array
+     */
+    private function getPasswordResetconfirmationrTxType()
+    {
+        $attributes = array(
+            new AttributeType(null, 'fullname', DataType::$STRING, false),
+            new AttributeType(null, 'psw_reset_url', DataType::$STRING, false),
+            new AttributeType(null, 'store_id', DataType::$STRING, false),
+            new AttributeType(null, 'store_name', DataType::$STRING, false)
+        );
+
+        return $attributes;
+    }
+
+    /**
+     * Create new account transaction type fields
+     *
+     * @return array
+     */
+    private function getNewAccountTxType()
+    {
+        $attributes = array(
+            new AttributeType(null, 'fullname', DataType::$STRING, false),
+            new AttributeType(null, 'type', DataType::$STRING, false),
+            new AttributeType(null, 'account_url', DataType::$STRING, false),
+            new AttributeType(null, 'account_confirm_url', DataType::$STRING, false),
+            new AttributeType(null, 'psw_reset_url', DataType::$STRING, false),
+            new AttributeType(null, 'store_id', DataType::$STRING, false),
+            new AttributeType(null, 'store_name', DataType::$STRING, false)
+        );
 
         return $attributes;
     }

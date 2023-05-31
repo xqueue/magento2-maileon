@@ -1,3 +1,6 @@
+# 1.9.0
+- Add customer account related transactions
+
 # 1.8.12
 
 - Bugfix AfterPlaceOrder product categories

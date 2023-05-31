@@ -13,64 +13,81 @@ use de\xqueue\maileon\api\client\contacts\StandardContactField;
 use de\xqueue\maileon\api\client\contacts\SynchronizationMode;
 use de\xqueue\maileon\api\client\reports\ReportsService;
 use de\xqueue\maileon\api\client\MaileonAPIException;
+use Psr\Log\LoggerInterface;
 
 class ContactCreate
 {
     /**
      * Maileon API key
-     * @var string $apikey
+     *
+     * @var string
      */
     private $apikey;
 
     /**
      * Email address
-     * @var string $email
+     *
+     * @var string
      */
     private $email;
 
     /**
      * Maileon permission
-     * @var int $permission
+     *
+     * @var string
      */
     private $permission;
 
     /**
      * Maileon DOI process
-     * @var string $doiprocess
+     *
+     * @var boolean
      */
     private $doiprocess;
 
     /**
-     * Maileon DOI process
-     * @var string $doiprocess
+     * Maileon DOI+ process
+     *
+     * @var boolean
      */
     private $doiplusprocess;
 
     /**
      * Maileon DOI key
-     * @var string $doikey
+     *
+     * @var string
      */
     private $doikey;
 
     /**
      * Print CURL debug data
-     * @var string $print_curl
+     *
+     * @var boolean
      */
     private $print_curl;
 
     /**
      * Maileon config
-     * @var array $maileon_config
+     *
+     * @var array
      */
     private $maileon_config;
 
+    /**
+     * Logger interface
+     *
+     * @var LoggerInterface
+     */
     private $logger;
 
     /**
-     * @param string $apikey   Maileon API key
-     * @param string $email    Contasct email address
-     * @param int $permission  Maileon permission
-     * @param string $doikey   Maileon DOI key
+     * @param string $apikey
+     * @param string $email
+     * @param string $permission
+     * @param string|boolean $doiprocess
+     * @param string|boolean $doiplusprocess
+     * @param string $doikey
+     * @param string|boolean $print_curl
      */
     public function __construct($apikey, $email, $permission, $doiprocess, $doiplusprocess, $doikey, $print_curl)
     {
@@ -79,7 +96,7 @@ class ContactCreate
         $this->permission     = $permission;
         $this->doiprocess     = filter_var($doiprocess, FILTER_VALIDATE_BOOLEAN);
         $this->doiplusprocess = filter_var($doiplusprocess, FILTER_VALIDATE_BOOLEAN);
-        $this->doikey         = (string) $doikey;
+        $this->doikey         = $doikey;
         $this->print_curl     = filter_var($print_curl, FILTER_VALIDATE_BOOLEAN);
 
         $this->maileon_config = array(
@@ -91,6 +108,12 @@ class ContactCreate
         $this->logger = \Magento\Framework\App\ObjectManager::getInstance()->get('\Psr\Log\LoggerInterface');
     }
 
+    /**
+     * Set Permission
+     *
+     * @param string $permission
+     * @return void
+     */
     public function setPermission($permission)
     {
         $this->permission = $permission;
@@ -99,7 +122,10 @@ class ContactCreate
     /**
      * Create Maileon Contact
      *
-     * @param array $subscriber_data   Shopware subscriber data
+     * @param array $subscriber_data
+     * @param array $standard_fields
+     * @param array $custom_fields
+     *
      * @return boolean
      */
     public function makeMalieonContact($subscriber_data = array(), $standard_fields = array(), $custom_fields = array())
@@ -170,19 +196,20 @@ class ContactCreate
                     SynchronizationMode::$UPDATE
                 );
             }
-
-            $success = $maileon_response->isSuccess();
         } catch (MaileonAPIException $e) {
             $this->logger->error('Error at create Contact. Message: ' . (string) $e->getMessage());
         }
 
-        if ($success) {
-            return true;
-        } else {
-            return false;
-        }
+        return $maileon_response->isSuccess();
     }
 
+    /**
+     * Get permission
+     *
+     * @param boolean $buyer_enabled
+     * @param string $buyer_permission
+     * @return string
+     */
     public function getPermission($buyer_enabled, $buyer_permission)
     {
         $reportsService = new ReportsService($this->maileon_config);
@@ -215,6 +242,12 @@ class ContactCreate
         return $permission;
     }
 
+    /**
+     * Create custom fields at Maileon if not exist
+     *
+     * @param array $custom_fields
+     * @return void
+     */
     public function checkCustomFields($custom_fields)
     {
         $contacts_service = new ContactsService($this->maileon_config);
@@ -240,6 +273,14 @@ class ContactCreate
         }
     }
 
+    /**
+     * Create Contact obj
+     *
+     * @param array $subscriber_data
+     * @param array $standard_fields
+     * @param array $custom_fields
+     * @return Contact
+     */
     public function prepareContact($subscriber_data = array(), $standard_fields = array(), $custom_fields = array())
     {
         $contact = new Contact();
@@ -280,13 +321,9 @@ class ContactCreate
     }
 
     /**
-     * Check Maileon contact is exists
+     * Check Contact is exist at Maileon
      *
-     * @param string $maileon_apikey
-     *  the Maileon API key
-     * @param string $email
-     *  the contact email address
-     * @return boolean $exists
+     * @return boolean
      */
 
     public function maileonContactIsExists()
@@ -323,12 +360,6 @@ class ContactCreate
             );
         }
 
-        $success = $response->isSuccess();
-
-        if ($success) {
-            return true;
-        } else {
-            return false;
-        }
+        return $response->isSuccess();
     }
 }

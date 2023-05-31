@@ -162,7 +162,7 @@ class AfterPlaceOrder implements ObserverInterface
                 // Category data
                 $category_ids = $product->getCategoryIds();
                 $categories = [];
-                
+                 
                 foreach ($category_ids as $category) {
                     $cat = $objectManager->create('Magento\Catalog\Model\Category')->load($category);
                     $categories[] = $cat->getName();
@@ -266,7 +266,7 @@ class AfterPlaceOrder implements ObserverInterface
 
                 if (!empty((int) $item_total)) {
                     // Send the request
-                    $transactionCreate->sendOrderTransaction(
+                    $transactionCreate->sendTransaction(
                         $customer_email,
                         'magento_orders_extended_v2',
                         $content_ext
@@ -297,7 +297,7 @@ class AfterPlaceOrder implements ObserverInterface
             }
 
             // Send the request
-            $transactionCreate->sendOrderTransaction(
+            $transactionCreate->sendTransaction(
                 $customer_email,
                 'magento_orders_v2',
                 $content
