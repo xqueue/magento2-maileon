@@ -153,12 +153,40 @@ class TransactionCreate
                 $transactionType->attributes = $this->getOrderTransactionType();
                 break;
 
+            case 'magento_order_status_changed_v1':
+                $transactionType->attributes = $this->getOrderStatusChangeTxType();
+                break;
+
             case 'magento_orders_extended_v2':
                 $transactionType->attributes = $this->getOrderExtendedTransactionType();
                 break;
 
             case 'magento_abandoned_carts_v2':
                 $transactionType->attributes = $this->getCartTransactionType();
+                break;
+
+            case 'magento_order_creditmemo_update_v1':
+                $transactionType->attributes = $this->getCreditemoTxType();
+                break;
+
+            case 'magento_order_creditmemo_v1':
+                $transactionType->attributes = $this->getCreditemoTxType();
+                break;
+
+            case 'magento_order_invoice_update_v1':
+                $transactionType->attributes = $this->getInvoiceTxType();
+                break;
+
+            case 'magento_order_invoice_v1':
+                $transactionType->attributes = $this->getInvoiceTxType();
+                break;
+
+            case 'magento_order_shipment_update_v1':
+                $transactionType->attributes = $this->getShipmentTxType();
+                break;
+
+            case 'magento_order_shipment_v1':
+                $transactionType->attributes = $this->getShipmentTxType();
                 break;
 
             case 'magento_account_credentials_changed_v1':
@@ -376,6 +404,73 @@ class TransactionCreate
         );
 
         $attributes = $this->addGenericFields($attributes);
+
+        return $attributes;
+    }
+
+    /**
+     * Create order status change transaction type fields
+     *
+     * @return array
+     */
+    private function getOrderStatusChangeTxType()
+    {
+        $attributes = $this->getOrderTransactionType();
+
+        array_push($attributes, new AttributeType(null, 'order.comment', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'store.id', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'store.name', DataType::$STRING, false));
+
+        return $attributes;
+    }
+
+    /**
+     * Create creditmemo transaction type fields
+     *
+     * @return array
+     */
+    private function getCreditemoTxType()
+    {
+        $attributes = $this->getOrderTransactionType();
+
+        array_push($attributes, new AttributeType(null, 'order.creditmemo.id', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'order.comment', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'store.id', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'store.name', DataType::$STRING, false));
+
+        return $attributes;
+    }
+
+    /**
+     * Create invoice transaction type fields
+     *
+     * @return array
+     */
+    private function getInvoiceTxType()
+    {
+        $attributes = $this->getOrderTransactionType();
+
+        array_push($attributes, new AttributeType(null, 'order.invoice.id', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'order.comment', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'store.id', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'store.name', DataType::$STRING, false));
+
+        return $attributes;
+    }
+
+    /**
+     * Create shipment transaction type fields
+     *
+     * @return array
+     */
+    private function getShipmentTxType()
+    {
+        $attributes = $this->getOrderTransactionType();
+
+        array_push($attributes, new AttributeType(null, 'order.shipment.id', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'order.comment', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'store.id', DataType::$STRING, false));
+        array_push($attributes, new AttributeType(null, 'store.name', DataType::$STRING, false));
 
         return $attributes;
     }

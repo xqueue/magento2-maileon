@@ -41,4 +41,36 @@
         <plugin name="MaileonSyncPluginModelCustomerEmailNotification" type="Xqueue\Maileon\Model\Customer\EmailNotification" sortOrder="1"/>
     </type>
 
+    <type name="Magento\Sales\Model\Order\Email\Sender\CreditmemoCommentSender">
+        <plugin name="MaileonSyncPluginModelOrderEmailCreditmemoCommentSender" type="Xqueue\Maileon\Model\Order\Email\CreditmemoCommentSender" sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Sales\Model\Order\Email\Sender\CreditmemoSender">
+        <plugin name="MaileonSyncPluginModelOrderEmailCreditmemoSender" type="Xqueue\Maileon\Model\Order\Email\CreditmemoSender" sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Sales\Model\Order\Email\Sender\InvoiceCommentSender">
+        <plugin name="MaileonSyncPluginModelOrderEmailInvoiceCommentSender" type="Xqueue\Maileon\Model\Order\Email\InvoiceCommentSender" sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Sales\Model\Order\Email\Sender\InvoiceSender">
+        <plugin name="MaileonSyncPluginModelOrderEmailInvoiceSender" type="Xqueue\Maileon\Model\Order\Email\InvoiceSender" sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Sales\Model\Order\Email\Sender\OrderSender">
+        <plugin name="MaileonSyncPluginModelOrderEmailOrderSender" type="Xqueue\Maileon\Model\Order\Email\OrderSender" sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Sales\Model\Order\Email\Sender\OrderCommentSender">
+        <plugin name="MaileonSyncPluginModelOrderEmailOrderCommentSender" type="Xqueue\Maileon\Model\Order\Email\OrderCommentSender" sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Sales\Model\Order\Email\Sender\ShipmentCommentSender">
+        <plugin name="MaileonSyncPluginModelOrderEmailShipmentCommentSender" type="Xqueue\Maileon\Model\Order\Email\ShipmentCommentSender" sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Sales\Model\Order\Email\Sender\ShipmentSender">
+        <plugin name="MaileonSyncPluginModelOrderEmailShipmentSender" type="Xqueue\Maileon\Model\Order\Email\ShipmentSender" sortOrder="1"/>
+    </type>
+
 </config>

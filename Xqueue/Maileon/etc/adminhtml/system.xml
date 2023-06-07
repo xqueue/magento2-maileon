@@ -117,6 +117,29 @@
                     <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
                 </field>
             </group>
+            <group id="order_related_transactions" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Order Related Email Notifications</label>
+                <field id="creditmemo" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Payment status change</label>
+                    <comment>Send payment status change email notifications from Maileon</comment>
+                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                </field>
+                <field id="invoice" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Invoice</label>
+                    <comment>Send invoice email notifications from Maileon</comment>
+                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                </field>
+                <field id="order_status" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Order status change</label>
+                    <comment>Send order status change email notifications from Maileon</comment>
+                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                </field>
+                <field id="shipment_status" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Shipment status change</label>
+                    <comment>Send shipment status change email notifications from Maileon</comment>
+                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                </field>
+            </group>
             <group id="abandoned_cart" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Abandoned Cart Configuration</label>
                 <field id="active_modul" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
