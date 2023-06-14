@@ -15,14 +15,14 @@
     </route>
 
     <route url="/V1/maileon/mark-abandoned-carts" method="GET">
-        <service class="Xqueue\Maileon\Api\MaileonTestAbandonedCartsInterface" method="testMarkAbandonedCarts"/>
+        <service class="Xqueue\Maileon\Api\TestMarkAbandonedCartsInterface" method="testMarkAbandonedCarts"/>
         <resources>
             <resource ref="anonymous"/>
         </resources>
     </route>
 
     <route url="/V1/maileon/send-abandoned-carts-emails" method="GET">
-        <service class="Xqueue\Maileon\Api\MaileonTestAbandonedCartsInterface" method="testSendAbandonedCartsEmails"/>
+        <service class="Xqueue\Maileon\Api\TestSendAbandonedCartsEmailsInterface" method="testSendAbandonedCartsEmails"/>
         <resources>
             <resource ref="anonymous"/>
         </resources>

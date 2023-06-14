@@ -1,0 +1,45 @@
+{
+    "maileon_queue": {
+        "column": {
+            "id": true,
+            "recipient_name": true,
+            "recipient_email": true,
+            "store_id": true,
+            "product_ids": true,
+            "category_ids": true,
+            "customer_id": true,
+            "quote_id": true,
+            "created_at": true,
+            "updated_at": true,
+            "quote_total": true,
+            "items_count": true,
+            "quote_hash": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "maileon_log": {
+        "column": {
+            "id": true,
+            "sent_at": true,
+            "sender_name": true,
+            "sender_email": true,
+            "recipient_name": true,
+            "recipient_email": true,
+            "product_ids": true,
+            "category_ids": true,
+            "customer_id": true,
+            "sent_count": true,
+            "template_id": true,
+            "quote_id": true,
+            "store_id": true,
+            "created_at": true,
+            "updated_at": true,
+            "quote_hash": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    }
+}

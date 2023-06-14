@@ -2,18 +2,8 @@
  
 namespace Xqueue\Maileon\Api;
  
-interface MaileonTestAbandonedCartsInterface
+interface TestSendAbandonedCartsEmailsInterface
 {
-    /**
-     * Test mark abandoned carts method
-     *
-     * @param string $token
-     *
-     * @return string
-     */
- 
-    public function testMarkAbandonedCarts($token);
-
     /**
      * Test send abandoned carts emails method
      *

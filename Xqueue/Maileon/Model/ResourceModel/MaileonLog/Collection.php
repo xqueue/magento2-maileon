@@ -1,5 +1,5 @@
 <?php
-namespace Xqueue\Maileon\Model\ResourceModel\Log;
+namespace Xqueue\Maileon\Model\ResourceModel\MaileonLog;
 
 class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection
 {
@@ -9,6 +9,6 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
     
     protected function _construct()
     {
-        $this->_init('Xqueue\Maileon\Model\Log', 'Xqueue\Maileon\Model\ResourceModel\Log');
+        $this->_init('Xqueue\Maileon\Model\MaileonLog', 'Xqueue\Maileon\Model\ResourceModel\MaileonLog');
     }
 }

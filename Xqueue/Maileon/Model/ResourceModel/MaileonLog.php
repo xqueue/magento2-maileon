@@ -1,7 +1,7 @@
 <?php
 namespace Xqueue\Maileon\Model\ResourceModel;
 
-class Queue extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
+class MaileonLog extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
 {
     public function __construct(
         \Magento\Framework\Model\ResourceModel\Db\Context $context
@@ -11,6 +11,6 @@ class Queue extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     
     protected function _construct()
     {
-        $this->_init('maileon_queue', 'id');
+        $this->_init('maileon_log', 'id');
     }
 }

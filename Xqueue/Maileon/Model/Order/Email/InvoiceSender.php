@@ -183,13 +183,11 @@ class InvoiceSender extends MaileonSender
         if ($contactCreated) {
             $transactionCreate = new TransactionCreate($this->pluginConfig['maileonApiKey'], 'no');
 
-            $transactionCreate->sendTransaction(
+            return $transactionCreate->sendTransaction(
                 $order->getCustomerEmail(),
                 'magento_order_invoice_v1',
                 $this->createTransactionContent($order, $invoice)
             );
-
-            return true;
         }
 
         return false;

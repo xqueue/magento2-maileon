@@ -255,12 +255,13 @@ class EmailNotification
             $params = '?id=' . $customer->getId() . '&token=' . $customerEmailData->getRpToken();
             $pswResetUrl = $baseUrl . 'customer/account/createPassword/' . $params;
             $accountUrl = $baseUrl . 'customer/account/';
-            $accountConfirmUrl = '';
 
-            if (!empty($backUrl)) {
-                $acuParams = '?id=' . $customer->getId() . '&key=' . $customer->getConfirmation() . '&back_url=' . $backUrl;
-                $accountConfirmUrl = $baseUrl . 'customer/account/confirm/' . $acuParams;
+            if (empty($backUrl)) {
+                $backUrlParams = '&id=' . $customer->getId() . '&key=' . $customer->getConfirmation();
+                $backUrl =  $baseUrl . 'customer/account/index/' . $backUrlParams;
             }
+
+            $accountConfirmUrl = $baseUrl . 'customer/account/confirm/?back_url=' . $backUrl;
 
             $contactCreated = $this->updateOrCreateContact(
                 $customer,
@@ -289,7 +290,7 @@ class EmailNotification
 
             $result = null;
         } else {
-            $result = $proceed($customer);
+            $result = $proceed($customer, $type, $backUrl, $storeId, $sendemailStoreId);
         }
 
         return $result;

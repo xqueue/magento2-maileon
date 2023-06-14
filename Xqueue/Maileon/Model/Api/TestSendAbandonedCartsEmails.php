@@ -1,14 +1,14 @@
 <?php
-
-namespace Xqueue\Maileon\Cron;
+ 
+namespace Xqueue\Maileon\Model\Api;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
 use Xqueue\Maileon\Model\Maileon\ContactCreate;
 use Xqueue\Maileon\Model\Maileon\TransactionCreate;
 use de\xqueue\maileon\api\client\contacts\Contact;
-
-class SendAbandonedCartsEmails
+ 
+class TestSendAbandonedCartsEmails
 {
     /**
      * @var \Psr\Log\LoggerInterface
@@ -39,7 +39,7 @@ class SendAbandonedCartsEmails
      * @var \Magento\Framework\Message\ManagerInterface
      */
     protected $messageManager;
-
+ 
     public function __construct(
         \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\ObjectManagerInterface $objectManager,
@@ -56,24 +56,44 @@ class SendAbandonedCartsEmails
         $this->messageManager = $messageManager;
     }
 
-    public function execute()
+    /**
+     * @inheritdoc
+     */
+ 
+    public function testSendAbandonedCartsEmails($token)
     {
+        $isEnabledWebhookTest = $this->isEnabledWebhookTest($token);
+
+        if (!$isEnabledWebhookTest['success']) {
+            return json_encode($isEnabledWebhookTest);
+        }
+
         try {
             $maileonQueueCollection = $this->objectManager->create(
                 'Xqueue\Maileon\Model\ResourceModel\MaileonQueue\Collection'
             );
 
+            $successfulSending = 0;
+            $foundRecord = 0;
+            $configProblem = 0;
+            $alreadySent = 0;
+            $failed = 0;
+
             foreach ($maileonQueueCollection as $maileonQueueModel) {
+                $foundRecord++;
+
                 $config = $this->getSendAbandonedCartsConfig($maileonQueueModel->getStoreId());
                 $checkConfig = $this->checkSendAbandonedCartsConfigValues($config);
 
                 if (!$checkConfig['success']) {
                     $this->logger->error('Problem with the config values: ' . $checkConfig['message']);
+                    $configProblem++;
                     continue;
                 }
 
                 if ($this->isAlreadySentWithSameContent($maileonQueueModel)) {
                         $maileonQueueModel->delete();
+                        $alreadySent++;
                         continue;
                 }
 
@@ -87,12 +107,23 @@ class SendAbandonedCartsEmails
                 );
 
                 if ($sendToMaileonResult) {
+                    // Add new Log in log table
                     $this->saveAbandonedCartToLog($maileonQueueModel, $content['cart.product_ids']);
 
                     // Remove from Queue
                     $maileonQueueModel->delete();
+
+                    $successfulSending++;
+                } else {
+                    $failed++;
                 }
             }
+
+            $response['result'] = 'Founded record: ' . $foundRecord .
+            ' Problem with config: ' . $configProblem .
+            ' Already sent: ' . $alreadySent .
+            ' Successful sending: ' . $successfulSending .
+            ' Failed: ' . $failed;
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
             $this->messageManager->addExceptionMessage(
                 $e,
@@ -100,7 +131,7 @@ class SendAbandonedCartsEmails
             );
         }
 
-        return true;
+        return json_encode($response);
     }
 
     /**

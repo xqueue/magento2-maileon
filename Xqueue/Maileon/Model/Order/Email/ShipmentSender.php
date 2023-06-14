@@ -187,13 +187,11 @@ class ShipmentSender extends MaileonSender
         if ($contactCreated) {
             $transactionCreate = new TransactionCreate($this->pluginConfig['maileonApiKey'], 'no');
 
-            $transactionCreate->sendTransaction(
+            return $transactionCreate->sendTransaction(
                 $order->getCustomerEmail(),
                 'magento_order_shipment_v1',
                 $this->createTransactionContent($order, $shipment)
             );
-
-            return true;
         }
 
         return false;

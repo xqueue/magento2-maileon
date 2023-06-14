@@ -13,7 +13,6 @@ use de\xqueue\maileon\api\client\transactions\AttributeType;
 use de\xqueue\maileon\api\client\transactions\Transaction;
 use de\xqueue\maileon\api\client\transactions\ContactReference;
 use de\xqueue\maileon\api\client\MaileonAPIException;
-use Xqueue\Maileon\Model\Maileon\ContactCreate;
 
 class TransactionCreate
 {
@@ -70,7 +69,7 @@ class TransactionCreate
      * @param string $email
      * @param string $transaction_name
      * @param array $content
-     * @return void
+     * @return boolean
      */
     public function sendTransaction(
         $email,
@@ -101,12 +100,14 @@ class TransactionCreate
         $transaction->content = $content;
     
         try {
-            $transactionsService->createTransactions(array($transaction), true, false);
+            $result = $transactionsService->createTransactions(array($transaction), true, false);
         } catch (MaileonAPIException $e) {
             $this->logger->error(
                 (string) $e->getMessage()
             );
         }
+
+        return $result->isSuccess();
     }
 
     /**
@@ -138,7 +139,7 @@ class TransactionCreate
     /**
      * Make Maileon transaction types for Magento
      *
-     * @return string $transaction_name
+     * @return boolean
      */
     public function setTransactionType($transaction_name)
     {
@@ -640,114 +641,5 @@ class TransactionCreate
         array_push($attributes, new AttributeType(null, 'generic.json_3', DataType::$JSON, false));
 
         return $attributes;
-    }
-
-    /**
-     * Send abandoned cart transaction for Maileon
-     *
-     * @param string $email
-     * @param array $content
-     * @param integer $permission
-     * @param array $standard_fields
-     * @param array $custom_fields
-     * @return boolean
-     */
-    public function sendAbandonedCartTransaction(
-        $email,
-        $content,
-        $permission,
-        $standard_fields = array(),
-        $custom_fields = array()
-    ) {
-        $transactionsService = new TransactionsService($this->maileonConfig);
-        $transactionsService->setDebug($this->printCurl);
-
-        $existsTransactionType = $this->existsTransactionType('magento_abandoned_carts_v2');
-
-        if (!$existsTransactionType) {
-            $transactionType = $this->setTransactionType('magento_abandoned_carts_v2');
-
-            if (!$transactionType) {
-                $this->logger->error(
-                    'Error in TransactionType creation!'
-                );
-            }
-        }
-
-        $transaction = new Transaction();
-        $transaction->contact = new ContactReference();
-
-        $sync = new ContactCreate($this->apiKey, $email, $permission, 'no', 'no', null, $this->printCurl);
-
-        if ($sync->maileonContactIsExists()) {
-            $transaction->contact->email = $email;
-        } else {
-            $response = $sync->makeMalieonContact(null, $standard_fields, $custom_fields);
-
-            if ($response) {
-                $transaction->contact->email = $email;
-                $this->logger->info('Contact subscribe Done!');
-            } else {
-                $this->logger->debug('Contact subscribe Failed!');
-            }
-        }
-
-        $transaction->typeName = 'magento_abandoned_carts_v2';
-
-        $transaction->content = $content;
-
-        $result = $transactionsService->createTransactions(array($transaction), true, false);
-
-        if (!$result->isSuccess()) {
-            $this->logger->debug("Failed sending to: " . $email . ". Debug information: " . $result->getBodyData());
-        }
-
-        return $result->isSuccess();
-    }
-
-    /**
-     * Process abandoned cart reminder
-     *
-     * @param string $email
-     * @param array $content
-     * @param integer $permission
-     * @param string $shadowEmail
-     * @param string $overrideEmail
-     * @param array $standard_fields
-     * @param array $custom_fields
-     * @return void
-     */
-    public function processAbandonedCartReminder(
-        $email,
-        $content,
-        $permission,
-        $shadowEmail,
-        $overrideEmail,
-        $standard_fields = array(),
-        $custom_fields = array()
-    ) {
-        // Check wether to set the original email or the override email address
-        if (isset($shadowEmail) && !empty($shadowEmail) && trim($shadowEmail) != '') {
-            $this->sendAbandonedCartTransaction(
-                $shadowEmail,
-                $content,
-                $permission,
-                $standard_fields,
-                $custom_fields
-            );
-        }
-
-        // Check wether to set the original email or the override email address
-        if (isset($overrideEmail) && !empty($overrideEmail) && trim($overrideEmail) != '') {
-            $email = $overrideEmail;
-        }
-
-        return $this->sendAbandonedCartTransaction(
-            $email,
-            $content,
-            $permission,
-            $standard_fields,
-            $custom_fields
-        );
     }
 }

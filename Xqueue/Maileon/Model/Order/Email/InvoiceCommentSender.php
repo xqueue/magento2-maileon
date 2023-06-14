@@ -152,13 +152,11 @@ class InvoiceCommentSender extends MaileonSender
         if ($contactCreated) {
             $transactionCreate = new TransactionCreate($this->pluginConfig['maileonApiKey'], 'no');
 
-            $transactionCreate->sendTransaction(
+            return $transactionCreate->sendTransaction(
                 $order->getCustomerEmail(),
                 'magento_order_invoice_update_v1',
                 $this->createTransactionContent($order, $invoice, $comment)
             );
-
-            return true;
         }
 
         return false;

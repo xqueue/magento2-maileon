@@ -2,6 +2,7 @@
 
 - Add customer account related transactions
 - Add order related transactions
+- Improve abandoned carts functionality
 
 # 1.8.12
 

@@ -152,13 +152,11 @@ class CreditmemoCommentSender extends MaileonSender
         if ($contactCreated) {
             $transactionCreate = new TransactionCreate($this->pluginConfig['maileonApiKey'], 'no');
 
-            $transactionCreate->sendTransaction(
+            return $transactionCreate->sendTransaction(
                 $order->getCustomerEmail(),
                 'magento_order_creditmemo_update_v1',
                 $this->createTransactionContent($order, $creditmemo, $comment)
             );
-
-            return true;
         }
 
         return false;

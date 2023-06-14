@@ -143,13 +143,11 @@ class OrderSender extends MaileonSender
 
             $content = $this->createTransactionContent($order, $transactionCreate);
 
-            $transactionCreate->sendTransaction(
+            return $transactionCreate->sendTransaction(
                 $order->getCustomerEmail(),
                 'magento_orders_v2',
                 $content
             );
-
-            return true;
         }
 
         return false;

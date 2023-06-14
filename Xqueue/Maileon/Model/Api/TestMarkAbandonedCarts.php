@@ -1,12 +1,12 @@
 <?php
-
-namespace Xqueue\Maileon\Cron;
+ 
+namespace Xqueue\Maileon\Model\Api;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Reports\Model\ResourceModel\Quote\Collection;
 use Magento\Store\Model\ScopeInterface;
-
-class MarkAbandonedCarts
+ 
+class TestMarkAbandonedCarts
 {
     /**
      * @var \Psr\Log\LoggerInterface
@@ -32,7 +32,7 @@ class MarkAbandonedCarts
      * @var \Magento\Framework\Message\ManagerInterface
      */
     protected $messageManager;
-
+ 
     public function __construct(
         \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\ObjectManagerInterface $objectManager,
@@ -46,31 +46,51 @@ class MarkAbandonedCarts
         $this->storeManager = $storeManager;
         $this->messageManager = $messageManager;
     }
-
-    public function execute()
+ 
+    /**
+     * @inheritdoc
+     */
+ 
+    public function testMarkAbandonedCarts($token)
     {
         $config = $this->getPluginConfigValues();
         $storeIds = array_keys($this->storeManager->getStores(false));
         $enabledStoreIds = $this->checkStoreConfigModuleEnabled($storeIds);
-        $validateResult = $this->validateConfigValues($config);
+        $validateResult = $this->validateConfigValues($config, $token);
 
         if (empty($enabledStoreIds)) {
-            return false;
+            return json_encode([
+                'success' => false,
+                'message' => 'None of the stores have the module enabled!'
+            ]);
         }
 
         if (!$validateResult['success']) {
-            return false;
+            return json_encode($validateResult);
         }
 
+        $response = ['serverTimeNow' => date('Y-m-d H:i:s', strtotime('now'))];
+
         try {
+            $response['period'] = $config['reminderPeriodInHours'];
+
+            $dates = $this->getFromAndToDates($config['reminderPeriodInHours']);
+
+            $response['tryFrom'] = $dates['from'];
+            $response['tryTo'] = $dates['to'];
+
             $quotes = $this->getFilteredQuotes($config['reminderPeriodInHours'], $enabledStoreIds);
+
+            $response['quotes'] = $quotes->getData();
 
             foreach ($quotes as $quote) {
                 if ($this->isAlreadyInQueue($quote)) {
+                    $response['isAlreadyInQueue'] = 'true';
                     continue;
                 }
 
                 if ($this->isAlreadySentWithSameContent($quote)) {
+                    $response['isAlreadySentWithSameContent'] = 'true';
                     continue;
                 }
 
@@ -85,7 +105,7 @@ class MarkAbandonedCarts
             );
         }
 
-        return true;
+        return json_encode($response);
     }
 
     /**
@@ -100,6 +120,16 @@ class MarkAbandonedCarts
             'syncplugin/abandoned_cart/active_modul',
             ScopeInterface::SCOPE_STORE,
             $storeId
+        );
+
+        $config['testWebhookEnabled'] = (string) $this->scopeConfig->getValue(
+            'syncplugin/abandoned_cart/active_test_webhook',
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT
+        );
+
+        $config['testWebhookToken'] = (string) $this->scopeConfig->getValue(
+            'syncplugin/abandoned_cart/test_webhook_token',
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT
         );
 
         $config['reminderPeriodInHours'] = (int) $this->scopeConfig->getValue(
@@ -134,14 +164,36 @@ class MarkAbandonedCarts
      * Validate the config values.
      *
      * @param array $config
+     * @param string $token
      * @return array
      */
-    private function validateConfigValues(array $config): array
+    private function validateConfigValues(array $config, string $token): array
     {
+        if (empty($config['testWebhookEnabled']) || $config['testWebhookEnabled'] == 'no') {
+            return [
+                'success' => false,
+                'message' => 'Webhook test disabled! Value: ' . $config['testWebhookEnabled']
+            ];
+        }
+
         if (empty($config['reminderPeriodInHours'])) {
             return [
                 'success' => false,
                 'message' => 'Reminder period in hours is empty!'
+            ];
+        }
+
+        if (empty($config['testWebhookToken'])) {
+            return [
+                'success' => false,
+                'message' => 'Webhook test token is empty!'
+            ];
+        }
+
+        if ($token !== $config['testWebhookToken']) {
+            return [
+                'success' => false,
+                'message' => 'Webhook test token not match! Token: ' . $token
             ];
         }
 

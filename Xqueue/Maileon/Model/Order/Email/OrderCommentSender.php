@@ -149,13 +149,11 @@ class OrderCommentSender extends MaileonSender
         if ($contactCreated) {
             $transactionCreate = new TransactionCreate($this->pluginConfig['maileonApiKey'], 'no');
 
-            $transactionCreate->sendTransaction(
+            return $transactionCreate->sendTransaction(
                 $order->getCustomerEmail(),
                 'magento_order_status_changed_v1',
                 $this->createTransactionContent($order, $comment)
             );
-
-            return true;
         }
 
         return false;

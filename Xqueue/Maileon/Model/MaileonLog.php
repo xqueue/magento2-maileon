@@ -1,7 +1,7 @@
 <?php
 namespace Xqueue\Maileon\Model;
 
-class Log extends \Magento\Framework\Model\AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
+class MaileonLog extends \Magento\Framework\Model\AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
 {
     const CACHE_TAG = 'maileon_syncplugin_log';
 
@@ -11,7 +11,7 @@ class Log extends \Magento\Framework\Model\AbstractModel implements \Magento\Fra
     
     protected function _construct()
     {
-        $this->_init('Xqueue\Maileon\Model\ResourceModel\Log');
+        $this->_init('Xqueue\Maileon\Model\ResourceModel\MaileonLog');
     }
 
     public function getIdentities()
