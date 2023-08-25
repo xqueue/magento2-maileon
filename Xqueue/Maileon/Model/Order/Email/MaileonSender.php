@@ -95,7 +95,7 @@ abstract class MaileonSender
      * @param mixed $price
      * @return string
      */
-    protected function formatPrice(mixed $price): string
+    protected function formatPrice($price): string
     {
         return number_format(
             doubleval($price),

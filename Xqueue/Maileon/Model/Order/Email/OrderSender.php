@@ -71,7 +71,7 @@ class OrderSender extends MaileonSender
         \Xqueue\Maileon\Helper\External\Data $maileonExternalDataHelper,
         PaymentHelper $paymentHelper,
         OrderResource $orderResource,
-        ManagerInterface $eventManager,
+        ManagerInterface $eventManager
     ) {
         parent::__construct($addressRenderer);
         $this->identityContainer = $identityContainer;

@@ -1,3 +1,6 @@
+# 1.9.1
+- Fix mixed type declarations
+
 # 1.9.0
 
 - Add customer account related transactions
