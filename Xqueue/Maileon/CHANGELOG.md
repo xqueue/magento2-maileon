@@ -1,3 +1,6 @@
+# 1.9.2
+- Fix Maileon confirm webhook when the subscriber not exists at Magento 2 
+
 # 1.9.1
 - Fix mixed type declarations
 
