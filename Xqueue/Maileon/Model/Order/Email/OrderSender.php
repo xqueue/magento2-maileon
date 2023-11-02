@@ -279,6 +279,15 @@ class OrderSender extends MaileonSender
         $content['billing.address.zip']        = $billingAddressArr['postcode'];
         $content['billing.address.street']     = $billingAddressArr['street'];
 
+        // Get custom implementations of customer attributes for order transaction
+        $customAttributes = $this->maileonExternalDataHelper->getCustomOrderTransactionAttributes(
+            $content
+        );
+
+        foreach ($customAttributes as $key => $value) {
+            $content[$key] = $value;
+        }
+
         return $content;
     }
 

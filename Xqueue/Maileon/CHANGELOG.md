@@ -1,3 +1,6 @@
+# 1.9.3
+- Add getCustomOrderTransactionAttributes() helper method to order confirm transaction
+
 # 1.9.2
 - Fix Maileon confirm webhook when the subscriber not exists at Magento 2 
 
