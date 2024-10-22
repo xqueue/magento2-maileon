@@ -1,7 +1,7 @@
 {
 	"name" : "xqueue/module-maileon",
 	"description" : "Maileon Integration for Magento 2",
-	"version" : "1.9.3",
+	"version" : "1.9.4",
 	"type" : "magento2-module",
 	"license" : "GPL-3.0-or-later",
 	"authors" : [{
@@ -17,7 +17,7 @@
 	},
 	"require" : {
 		"php" : ">=7.2",
-        "xqueue/maileon-api-client": "^1.9"
+        "xqueue/maileon-api-client": "^1.9.10"
 	},
 	"autoload" : {
 		"files" : [

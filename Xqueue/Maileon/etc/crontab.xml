@@ -7,5 +7,8 @@
         <job name="maileon_sendabandonedcarts" instance="Xqueue\Maileon\Cron\SendAbandonedCartsEmails" method="execute">
             <schedule>*/5 * * * *</schedule>
         </job>
+        <job name="maileon_plugin_status_reporter" instance="Xqueue\Maileon\Cron\PluginStatusReporter" method="execute">
+            <schedule>0 4 * * *</schedule>
+        </job>
     </group>
 </config>

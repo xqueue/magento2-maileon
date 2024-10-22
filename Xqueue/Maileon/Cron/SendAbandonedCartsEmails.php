@@ -292,8 +292,8 @@ class SendAbandonedCartsEmails
         $cartItems = $this->createCartItems($quote);
 
         $content['cart.items']       = $cartItems['items'];
-        $content['cart.product_ids'] = join(',', $cartItems['productIds']);
-        $content['cart.categories']  = $cartItems['categories'];
+        $content['cart.product_ids'] = $this->sanitizeProductIdList($cartItems['productIds']);
+        $content['cart.categories']  = $this->sanitizeCategoriesList($cartItems['categories']);
         $content['cart.total']       = (float) $this->formatPrice($quote->getGrandTotal());
         $content['cart.total_tax']   = (float) $this->formatPrice($quote->getGrandTotal() - $quote->getSubtotal());
         $content['cart.currency']    = $quote->getBaseCurrencyCode();
@@ -459,7 +459,7 @@ class SendAbandonedCartsEmails
 
         if (!empty($categoryIds)) {
             $categories = [];
-            
+
             foreach ($categoryIds as $categoryId) {
                 $category = $this->objectManager->create('Magento\Catalog\Model\Category')->load($categoryId);
                 $categories[] = $category->getName();
@@ -492,7 +492,7 @@ class SendAbandonedCartsEmails
         } catch (\Exception $e) {
             $imageUrl = '';
         }
-        
+
         return $imageUrl;
     }
 
@@ -513,7 +513,7 @@ class SendAbandonedCartsEmails
         } catch (\Exception $e) {
             $imageUrl = '';
         }
-        
+
         return $imageUrl;
     }
 
@@ -531,5 +531,53 @@ class SendAbandonedCartsEmails
             '.',
             ''
         );
+    }
+
+    /**
+     * @param string $categoriesList
+     * @return string
+     */
+    protected function sanitizeCategoriesList(string $categoriesList): string
+    {
+        if (empty($categoriesList)) {
+            return '';
+        }
+
+        $categories = explode(',', $categoriesList);
+        $categories = array_filter(array_map('trim', $categories));
+        $uniqueCategories = array_unique($categories);
+        $categoriesList = implode(',', $uniqueCategories);
+
+        return $this->sanitizeTransactionStringValue($categoriesList);
+    }
+
+    /**
+     * @param array $productIds
+     * @return string
+     */
+    protected function sanitizeProductIdList(array $productIds): string
+    {
+        if (empty($productIds)) {
+            return '';
+        }
+
+        $productIds = array_filter(array_map('trim', $productIds));
+        $uniqueProductIds = array_unique($productIds);
+        $productIdList = implode(',', $uniqueProductIds);
+
+        return $this->sanitizeTransactionStringValue($productIdList);
+    }
+
+    /**
+     * @param $value
+     * @return string
+     */
+    protected function sanitizeTransactionStringValue($value): string
+    {
+        if (!empty($value)) {
+            return mb_substr($value, 0, 1000);
+        } else {
+            return '';
+        }
     }
 }
