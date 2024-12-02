@@ -408,10 +408,10 @@ class OrderSender extends MaileonSender
         $content['product.total']              = $productItem['total'];
         $content['product.sku']                = $productItem['sku'];
         $content['product.quantity']           = (string) $productItem['quantity'];
-        $content['product.image_url']          = $productItem['image_url'];
-        $content['product.url']                = $productItem['url'];
-        $content['product.categories']         = $productItem['categories'];
-        $content['product.short_description']  = $productItem['short_description'];
+        $content['product.image_url']          = $this->sanitizeTransactionStringValue($productItem['image_url']);
+        $content['product.url']                = $this->sanitizeTransactionStringValue($productItem['url']);
+        $content['product.categories']         = $this->sanitizeTransactionStringValue($productItem['categories']);
+        $content['product.short_description']  = $this->sanitizeTransactionStringValue($productItem['short_description']);
         $content['shipping.address.firstname'] = $shippingAddressArr['firstname'];
         $content['shipping.address.lastname']  = $shippingAddressArr['lastname'];
         $content['shipping.address.phone']     = $shippingAddressArr['telephone'];

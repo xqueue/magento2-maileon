@@ -1,3 +1,6 @@
+# 1.9.5
+- Fix product.short_description max. 1000 char length at  orders extended transaction types
+
 # 1.9.4
 - Fix order.categories and order.product_ids max. 1000 char length at transaction types
 - Add plugin status reporter cron job

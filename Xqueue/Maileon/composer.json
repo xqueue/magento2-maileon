@@ -1,7 +1,7 @@
 {
 	"name" : "xqueue/module-maileon",
 	"description" : "Maileon Integration for Magento 2",
-	"version" : "1.9.4",
+	"version" : "1.9.5",
 	"type" : "magento2-module",
 	"license" : "GPL-3.0-or-later",
 	"authors" : [{
