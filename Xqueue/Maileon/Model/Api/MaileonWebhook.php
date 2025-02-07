@@ -148,7 +148,7 @@ class MaileonWebhook
 
                     $subscriber = $this->subscriber->loadByEmail($email);
 
-                    if (!empty($subscriber)) {
+                    if (!empty($subscriber->getEmail())) {
                         $confirm_code = $subscriber->getCode();
                         $subscriber->confirm($confirm_code);
 

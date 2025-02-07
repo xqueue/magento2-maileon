@@ -1,3 +1,19 @@
+# 1.9.5
+- Fix product.short_description max. 1000 char length at  orders extended transaction types
+
+# 1.9.4
+- Fix order.categories and order.product_ids max. 1000 char length at transaction types
+- Add plugin status reporter cron job
+
+# 1.9.3
+- Add getCustomOrderTransactionAttributes() helper method to order confirm transaction
+
+# 1.9.2
+- Fix Maileon confirm webhook when the subscriber not exists at Magento 2 
+
+# 1.9.1
+- Fix mixed type declarations
+
 # 1.9.0
 
 - Add customer account related transactions

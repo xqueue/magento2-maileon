@@ -95,7 +95,7 @@ abstract class MaileonSender
      * @param mixed $price
      * @return string
      */
-    protected function formatPrice(mixed $price): string
+    protected function formatPrice($price): string
     {
         return number_format(
             doubleval($price),
@@ -119,7 +119,7 @@ abstract class MaileonSender
         if (!empty($categoryIds)) {
             $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
             $categories = [];
-            
+
             foreach ($categoryIds as $categoryId) {
                 $category = $objectManager->create('Magento\Catalog\Model\Category')->load($categoryId);
                 $categories[] = $category->getName();
@@ -141,19 +141,19 @@ abstract class MaileonSender
     {
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
-        $imagewidth = 200;
-        $imageheight = 200;
+        $imageWidth = 200;
+        $imageHeight = 200;
         $imageHelper = $objectManager->get('\Magento\Catalog\Helper\Image');
 
         try {
             $imageUrl = $imageHelper->init(
                 $product,
                 'product_page_image_small'
-            )->setImageFile($product->getFile())->resize($imagewidth, $imageheight)->getUrl();
+            )->setImageFile($product->getFile())->resize($imageWidth, $imageHeight)->getUrl();
         } catch (\Exception $e) {
             $imageUrl = '';
         }
-        
+
         return $imageUrl;
     }
 
@@ -204,5 +204,53 @@ abstract class MaileonSender
             ->getValue('syncplugin/orders/buyers_transaction_permission', ScopeInterface::SCOPE_STORE);
 
         return $config;
+    }
+
+    /**
+     * @param string $categoriesList
+     * @return string
+     */
+    protected function sanitizeCategoriesList(string $categoriesList): string
+    {
+        if (empty($categoriesList)) {
+            return '';
+        }
+
+        $categories = explode(',', $categoriesList);
+        $categories = array_filter(array_map('trim', $categories));
+        $uniqueCategories = array_unique($categories);
+        $categoriesList = implode(',', $uniqueCategories);
+
+        return $this->sanitizeTransactionStringValue($categoriesList);
+    }
+
+    /**
+     * @param array $productIds
+     * @return string
+     */
+    protected function sanitizeProductIdList(array $productIds): string
+    {
+        if (empty($productIds)) {
+            return '';
+        }
+
+        $productIds = array_filter(array_map('trim', $productIds));
+        $uniqueProductIds = array_unique($productIds);
+        $productIdList = implode(',', $uniqueProductIds);
+
+        return $this->sanitizeTransactionStringValue($productIdList);
+    }
+
+    /**
+     * @param $value
+     * @return string
+     */
+    protected function sanitizeTransactionStringValue($value): string
+    {
+        if (!empty($value)) {
+            return mb_substr($value, 0, 1000);
+        } else {
+            return '';
+        }
     }
 }

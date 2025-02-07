@@ -71,7 +71,7 @@ class OrderSender extends MaileonSender
         \Xqueue\Maileon\Helper\External\Data $maileonExternalDataHelper,
         PaymentHelper $paymentHelper,
         OrderResource $orderResource,
-        ManagerInterface $eventManager,
+        ManagerInterface $eventManager
     ) {
         parent::__construct($addressRenderer);
         $this->identityContainer = $identityContainer;
@@ -253,9 +253,13 @@ class OrderSender extends MaileonSender
 
         $totalNoShipping = $order->getGrandTotal() - $order->getShippingAmount();
 
+        $orderItems = $this->createItems($order, $transactionCreate);
+
         $content['order.id']                   = $order->getIncrementId();
         $content['order.date']                 = $order->getCreatedAt();
         $content['order.status']               = $order->getStatus();
+        $content['order.product_ids']          = $this->sanitizeProductIdList($orderItems['productIds']);
+        $content['order.categories']           = $this->sanitizeCategoriesList($orderItems['categories']);
         $content['order.total']                = (float) $this->formatPrice($order->getGrandTotal());
         $content['order.total_tax']            = (float) $this->formatPrice($order->getTaxAmount());
         $content['order.total_no_shipping']    = (float) $this->formatPrice($totalNoShipping);
@@ -263,7 +267,7 @@ class OrderSender extends MaileonSender
         $content['shipping.service.name']      = $order->getShippingMethod();
         $content['payment.method.id']          = $this->paymentMethodDetails($order)['id'];
         $content['payment.method.name']        = $this->paymentMethodDetails($order)['name'];
-        $content['order.items']                = $this->createItems($order, $transactionCreate);
+        $content['order.items']                = $orderItems['items'];
         $content['shipping.address.firstname'] = $shippingAddressArr['firstname'];
         $content['shipping.address.lastname']  = $shippingAddressArr['lastname'];
         $content['shipping.address.phone']     = $shippingAddressArr['telephone'];
@@ -279,6 +283,15 @@ class OrderSender extends MaileonSender
         $content['billing.address.zip']        = $billingAddressArr['postcode'];
         $content['billing.address.street']     = $billingAddressArr['street'];
 
+        // Get custom implementations of customer attributes for order transaction
+        $customAttributes = $this->maileonExternalDataHelper->getCustomOrderTransactionAttributes(
+            $content
+        );
+
+        foreach ($customAttributes as $key => $value) {
+            $content[$key] = $value;
+        }
+
         return $content;
     }
 
@@ -293,6 +306,8 @@ class OrderSender extends MaileonSender
     {
         $orderedItems = $order->getAllItems();
         $items = [];
+        $productIds = [];
+        $categories = '';
 
         if (empty($orderedItems)) {
             return $items;
@@ -336,7 +351,15 @@ class OrderSender extends MaileonSender
             }
 
             if (!empty((int) $itemTotal)) {
-                array_push($items, $item);
+                $items[] = $item;
+
+                $productIds[] = $orderedItem->getProductId();
+
+                if (empty($categories)) {
+                    $categories .= $this->getProductCategories($product);
+                } else {
+                    $categories .= ',' . $this->getProductCategories($product);
+                }
 
                 $transactionCreate->sendTransaction(
                     $order->getCustomerEmail(),
@@ -346,7 +369,11 @@ class OrderSender extends MaileonSender
             }
         }
 
-        return $items;
+        return [
+            'items' => $items,
+            'categories' => $categories,
+            'productIds' => $productIds
+        ];
     }
 
     /**
@@ -364,7 +391,7 @@ class OrderSender extends MaileonSender
         $billingAddressArr = $order->getBillingAddress()->getData();
 
         $totalNoShipping = $order->getGrandTotal() - $order->getShippingAmount();
-        
+
         $content['order.id']                   = $order->getIncrementId();
         $content['order.date']                 = $order->getCreatedAt();
         $content['order.status']               = $order->getStatus();
@@ -381,10 +408,10 @@ class OrderSender extends MaileonSender
         $content['product.total']              = $productItem['total'];
         $content['product.sku']                = $productItem['sku'];
         $content['product.quantity']           = (string) $productItem['quantity'];
-        $content['product.image_url']          = $productItem['image_url'];
-        $content['product.url']                = $productItem['url'];
-        $content['product.categories']         = $productItem['categories'];
-        $content['product.short_description']  = $productItem['short_description'];
+        $content['product.image_url']          = $this->sanitizeTransactionStringValue($productItem['image_url']);
+        $content['product.url']                = $this->sanitizeTransactionStringValue($productItem['url']);
+        $content['product.categories']         = $this->sanitizeTransactionStringValue($productItem['categories']);
+        $content['product.short_description']  = $this->sanitizeTransactionStringValue($productItem['short_description']);
         $content['shipping.address.firstname'] = $shippingAddressArr['firstname'];
         $content['shipping.address.lastname']  = $shippingAddressArr['lastname'];
         $content['shipping.address.phone']     = $shippingAddressArr['telephone'];
