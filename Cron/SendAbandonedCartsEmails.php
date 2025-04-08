@@ -3,6 +3,7 @@
 namespace Xqueue\Maileon\Cron;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Quote\Model\Quote;
 use Magento\Store\Model\ScopeInterface;
 use Xqueue\Maileon\Model\Maileon\ContactCreate;
 use Xqueue\Maileon\Model\Maileon\TransactionCreate;
@@ -282,6 +283,7 @@ class SendAbandonedCartsEmails
     {
         $quoteModelCollection = $this->objectManager->create('Magento\Reports\Model\ResourceModel\Quote\Collection');
         $quoteModelCollection->addFieldToFilter('entity_id', $maileonQueue->getQuoteId());
+        /** @var Quote $quote  */
         $quote = $quoteModelCollection->getFirstItem();
 
         $content = array();
@@ -305,6 +307,8 @@ class SendAbandonedCartsEmails
         $content['customer.firstname'] = $quote->getCustomerFirstname();
         $content['customer.lastname'] = $quote->getCustomerLastname();
         $content['customer.id'] = $quote->getCustomerId();
+        $content['generic.string_1'] = $quote->getStoreId() !== null ? (string) $quote->getStoreId() : '';
+        $content['generic.string_2'] = $quote->getStore() ? $quote->getStore()->getName() : '';
 
         // Get custom implementations of customer attributes for order transaction
         $customAttributes = $this->helper->getCustomAbandonedCartTransactionAttributes($content);

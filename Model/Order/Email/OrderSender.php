@@ -256,15 +256,15 @@ class OrderSender extends MaileonSender
         $orderItems = $this->createItems($order, $transactionCreate);
 
         $content['order.id']                   = $order->getIncrementId();
-        $content['order.date']                 = $order->getCreatedAt();
-        $content['order.status']               = $order->getStatus();
+        $content['order.date']                 = $order->getCreatedAt() !== null ? $order->getCreatedAt() : '';
+        $content['order.status']               = $order->getStatus() !== null ? $order->getStatus() : '';
         $content['order.product_ids']          = $this->sanitizeProductIdList($orderItems['productIds']);
         $content['order.categories']           = $this->sanitizeCategoriesList($orderItems['categories']);
         $content['order.total']                = (float) $this->formatPrice($order->getGrandTotal());
         $content['order.total_tax']            = (float) $this->formatPrice($order->getTaxAmount());
         $content['order.total_no_shipping']    = (float) $this->formatPrice($totalNoShipping);
-        $content['order.currency']             = $order->getOrderCurrencyCode();
-        $content['shipping.service.name']      = $order->getShippingMethod();
+        $content['order.currency']             = $order->getOrderCurrencyCode() !== null ? $order->getOrderCurrencyCode() : '';
+        $content['shipping.service.name']      = $order->getShippingMethod() !== null ? $order->getShippingMethod() : '';
         $content['payment.method.id']          = $this->paymentMethodDetails($order)['id'];
         $content['payment.method.name']        = $this->paymentMethodDetails($order)['name'];
         $content['order.items']                = $orderItems['items'];
@@ -282,6 +282,8 @@ class OrderSender extends MaileonSender
         $content['billing.address.city']       = $billingAddressArr['city'];
         $content['billing.address.zip']        = $billingAddressArr['postcode'];
         $content['billing.address.street']     = $billingAddressArr['street'];
+        $content['generic.string_1']           = $order->getStoreId() !== null ? (string) $order->getStoreId() : '';
+        $content['generic.string_2']           = $order->getStoreName() !== null ? $order->getStoreName() : '';
 
         // Get custom implementations of customer attributes for order transaction
         $customAttributes = $this->maileonExternalDataHelper->getCustomOrderTransactionAttributes(
@@ -393,13 +395,13 @@ class OrderSender extends MaileonSender
         $totalNoShipping = $order->getGrandTotal() - $order->getShippingAmount();
 
         $content['order.id']                   = $order->getIncrementId();
-        $content['order.date']                 = $order->getCreatedAt();
-        $content['order.status']               = $order->getStatus();
+        $content['order.date']                 = $order->getCreatedAt() !== null ? $order->getCreatedAt() : '';
+        $content['order.status']               = $order->getStatus() !== null ? $order->getStatus() : '';
         $content['order.total']                = (float) $this->formatPrice($order->getGrandTotal());
         $content['order.total_tax']            = (float) $this->formatPrice($order->getTaxAmount());
         $content['order.total_no_shipping']    = (float) $this->formatPrice($totalNoShipping);
-        $content['order.currency']             = $order->getOrderCurrencyCode();
-        $content['shipping.service.name']      = $order->getShippingMethod();
+        $content['order.currency']             = $order->getOrderCurrencyCode() !== null ? $order->getOrderCurrencyCode() : '';
+        $content['shipping.service.name']      = $order->getShippingMethod() !== null ? $order->getShippingMethod() : '';
         $content['payment.method.id']          = $this->paymentMethodDetails($order)['id'];
         $content['payment.method.name']        = $this->paymentMethodDetails($order)['name'];
         $content['product.id']                 = $productItem['product_id'];
@@ -426,6 +428,8 @@ class OrderSender extends MaileonSender
         $content['billing.address.city']       = $billingAddressArr['city'];
         $content['billing.address.zip']        = $billingAddressArr['postcode'];
         $content['billing.address.street']     = $billingAddressArr['street'];
+        $content['generic.string_1']           = $order->getStoreId() !== null ? (string) $order->getStoreId() : '';
+        $content['generic.string_2']           = $order->getStoreName() !== null ? $order->getStoreName() : '';
 
         // Get custom implementations of customer attributes for order extended transaction
         $customExtAttributes = $this->maileonExternalDataHelper->getCustomOrderExtendedTransactionAttributes(

@@ -1,3 +1,6 @@
+# 1.9.6
+- Added `store_id` and `store_name` as generic fields to order confirmation and abandoned cart transactions
+
 # 1.9.5
 - Fix product.short_description max. 1000 char length at  orders extended transaction types
 

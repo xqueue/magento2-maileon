@@ -3,6 +3,7 @@
 namespace Xqueue\Maileon\Model\Api;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Quote\Model\Quote;
 use Magento\Store\Model\ScopeInterface;
 use Xqueue\Maileon\Model\Maileon\ContactCreate;
 use Xqueue\Maileon\Model\Maileon\TransactionCreate;
@@ -62,22 +63,16 @@ class TestSendAbandonedCartsEmails
 
     public function testSendAbandonedCartsEmails($token)
     {
-        $isEnabledWebhookTest = $this->isEnabledWebhookTest($token);
-
-        if (!$isEnabledWebhookTest['success']) {
-            return json_encode($isEnabledWebhookTest);
-        }
+        $successfulSending = 0;
+        $foundRecord = 0;
+        $configProblem = 0;
+        $alreadySent = 0;
+        $failed = 0;
 
         try {
             $maileonQueueCollection = $this->objectManager->create(
                 'Xqueue\Maileon\Model\ResourceModel\MaileonQueue\Collection'
             );
-
-            $successfulSending = 0;
-            $foundRecord = 0;
-            $configProblem = 0;
-            $alreadySent = 0;
-            $failed = 0;
 
             foreach ($maileonQueueCollection as $maileonQueueModel) {
                 $foundRecord++;
@@ -92,9 +87,9 @@ class TestSendAbandonedCartsEmails
                 }
 
                 if ($this->isAlreadySentWithSameContent($maileonQueueModel)) {
-                        $maileonQueueModel->delete();
-                        $alreadySent++;
-                        continue;
+                    $maileonQueueModel->delete();
+                    $alreadySent++;
+                    continue;
                 }
 
                 $content = $this->createAbandonedCartTransactionContent($maileonQueueModel);
@@ -107,31 +102,30 @@ class TestSendAbandonedCartsEmails
                 );
 
                 if ($sendToMaileonResult) {
-                    // Add new Log in log table
                     $this->saveAbandonedCartToLog($maileonQueueModel, $content['cart.product_ids']);
+                    $successfulSending++;
 
                     // Remove from Queue
                     $maileonQueueModel->delete();
-
-                    $successfulSending++;
-                } else {
-                    $failed++;
                 }
-            }
 
-            $response['result'] = 'Founded record: ' . $foundRecord .
-            ' Problem with config: ' . $configProblem .
-            ' Already sent: ' . $alreadySent .
-            ' Successful sending: ' . $successfulSending .
-            ' Failed: ' . $failed;
+                $response['result'] = 'Founded record: ' . $foundRecord .
+                    ' Problem with config: ' . $configProblem .
+                    ' Already sent: ' . $alreadySent .
+                    ' Successful sending: ' . $successfulSending .
+                    ' Failed: ' . $failed;
+
+                return json_encode($response);
+            }
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
+            $failed++;
             $this->messageManager->addExceptionMessage(
                 $e,
                 __('There was a problem with get abandoned carts: %1', $e->getMessage())
             );
         }
 
-        return json_encode($response);
+        return 'failed';
     }
 
     /**
@@ -313,6 +307,7 @@ class TestSendAbandonedCartsEmails
     {
         $quoteModelCollection = $this->objectManager->create('Magento\Reports\Model\ResourceModel\Quote\Collection');
         $quoteModelCollection->addFieldToFilter('entity_id', $maileonQueue->getQuoteId());
+        /** @var Quote $quote  */
         $quote = $quoteModelCollection->getFirstItem();
 
         $content = array();
@@ -336,6 +331,8 @@ class TestSendAbandonedCartsEmails
         $content['customer.firstname'] = $quote->getCustomerFirstname();
         $content['customer.lastname'] = $quote->getCustomerLastname();
         $content['customer.id'] = $quote->getCustomerId();
+        $content['generic.string_1'] = $quote->getStoreId() !== null ? (string) $quote->getStoreId() : '';
+        $content['generic.string_2'] = $quote->getStore() ? $quote->getStore()->getName() : '';
 
         // Get custom implementations of customer attributes for order transaction
         $customAttributes = $this->helper->getCustomAbandonedCartTransactionAttributes($content);
