@@ -1,3 +1,11 @@
+# 1.10.0
+- Contact events are now reliably sent to Maileon whenever Magento sends a transactional email (order, invoice etc.).
+- Email sending logic now supports separate enable/disable toggles for each type (order, invoice, shipment, etc.).
+- Complete internal refactoring of the module for improved maintainability and code quality.
+- Replaced all method overrides with Magento event-based architecture where possible.
+- Refactored newsletter subscription handling to eliminate deprecated `loadByEmail()` usage.
+- Removed direct use of `ObjectManager` in favor of dependency injection.
+
 # 1.9.6
 - Added `store_id` and `store_name` as generic fields to order confirmation and abandoned cart transactions
 
@@ -29,7 +37,7 @@
 
 # 1.8.11
 
-- Abandoned cart work with storeviews
+- Abandoned cart work with store views
 
 # 1.8.10
 

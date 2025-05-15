@@ -2,16 +2,18 @@
 
 namespace Xqueue\Maileon\Model\Config;
 
-class ListPermission implements \Magento\Framework\Option\ArrayInterface
+use Magento\Framework\Data\OptionSourceInterface;
+
+class ListPermission implements OptionSourceInterface
 {
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         return [
-        ['value' => 'none', 'label' => 'None'],
-        ['value' => 'single_optin', 'label' => 'Single Opt-in'],
-        ['value' => 'confirmed_optin', 'label' =>'Confirmed Opt-in'],
-        ['value' => 'double_optin', 'label' => 'Double Opt-in'],
-        ['value' => 'double_optin_plus', 'label' => 'Double Opt-in Plus']
+            ['value' => 'none', 'label' => 'None'],
+            ['value' => 'soi', 'label' => 'Single Opt-in'],
+            ['value' => 'coi', 'label' =>'Confirmed Opt-in'],
+            ['value' => 'doi', 'label' => 'Double Opt-in'],
+            ['value' => 'doi+', 'label' => 'Double Opt-in Plus']
         ];
     }
 }

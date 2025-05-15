@@ -1,28 +1,28 @@
 <?php
 namespace Xqueue\Maileon\Model;
 
-class MaileonLog extends \Magento\Framework\Model\AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
+use Magento\Framework\DataObject\IdentityInterface;
+use Magento\Framework\Model\AbstractModel;
+
+class MaileonLog extends AbstractModel implements IdentityInterface
 {
-    const CACHE_TAG = 'maileon_syncplugin_log';
+    const CACHE_TAG = 'xqueue_maileon_log';
 
-    protected $_cacheTag = 'maileon_syncplugin_log';
-
-    protected $_eventPrefix = 'maileon_syncplugin_log';
+    protected $_cacheTag = self::CACHE_TAG;
+    protected $_eventPrefix = 'xqueue_maileon_log';
     
-    protected function _construct()
+    protected function _construct(): void
     {
-        $this->_init('Xqueue\Maileon\Model\ResourceModel\MaileonLog');
+        $this->_init(\Xqueue\Maileon\Model\ResourceModel\MaileonLog::class);
     }
 
-    public function getIdentities()
+    public function getIdentities(): array
     {
         return [self::CACHE_TAG . '_' . $this->getId()];
     }
 
-    public function getDefaultValues()
+    public function getDefaultValues(): array
     {
-        $values = [];
-
-        return $values;
+        return [];
     }
 }

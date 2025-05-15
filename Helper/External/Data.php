@@ -9,8 +9,9 @@ class Data extends AbstractHelper
     /**
      * This method can return an associative array of special information for the given products.
      * @param array $product
+     * @return array
      */
-    public function getCustomProductAttributes($product)
+    public function getCustomProductAttributes(array $product): array
     {
         $result = array();
         
@@ -31,13 +32,14 @@ class Data extends AbstractHelper
     /**
      * This method can return an associative array of special information for the given order transaction.
      *
-     * @param array $transaction_content
+     * @param array $transactionContent
+     * @return array
      */
-    public function getCustomOrderTransactionAttributes($transaction_content)
+    public function getCustomOrderTransactionAttributes(array $transactionContent): array
     {
         $result = array();
 
-        if (!$transaction_content) {
+        if (!$transactionContent) {
             return $result;
         }
 
@@ -57,13 +59,14 @@ class Data extends AbstractHelper
     /**
      * This method can return an associative array of special information for the given order transaction.
      *
-     * @param array $transaction_ext_content
+     * @param array $transactionExtContent
+     * @return array
      */
-    public function getCustomOrderExtendedTransactionAttributes($transaction_ext_content)
+    public function getCustomOrderExtendedTransactionAttributes(array $transactionExtContent): array
     {
         $result = array();
 
-        if (!$transaction_ext_content) {
+        if (!$transactionExtContent) {
             return $result;
         }
 
@@ -84,8 +87,9 @@ class Data extends AbstractHelper
      * This method can return an associative array of special information for the given abandoned cart products.
      *
      * @param array $product
+     * @return array
      */
-    public function getCustomAbandonedCartProductAttributes($product)
+    public function getCustomAbandonedCartProductAttributes(array $product): array
     {
         $result = array();
         
@@ -106,13 +110,14 @@ class Data extends AbstractHelper
     /**
      * This method can return an associative array of special information for the given abandoned cart transaction.
      *
-     * @param array $transaction_content
+     * @param array $transactionContent
+     * @return array
      */
-    public function getCustomAbandonedCartTransactionAttributes($transaction_content)
+    public function getCustomAbandonedCartTransactionAttributes(array $transactionContent): array
     {
         $result = array();
 
-        if (!$transaction_content) {
+        if (!$transactionContent) {
             return $result;
         }
 

@@ -2,7 +2,4 @@
 
 namespace Xqueue\Maileon\Logger;
 
-class Logger extends \Monolog\Logger
-{
-
-}
+class Logger extends \Monolog\Logger {}

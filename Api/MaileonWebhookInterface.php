@@ -1,18 +1,17 @@
 <?php
  
 namespace Xqueue\Maileon\Api;
- 
+
 interface MaileonWebhookInterface
 {
     /**
      * GET unsubscribe webhook from Maileon
      * @param string $email
      * @param string $token
-     * @param string $storeview_id
+     * @param string|null $storeview_id
      * @return string
      */
- 
-    public function getUnsubscribeWebhook($email, $token, $storeview_id = null);
+    public function getUnsubscribeWebhook(string $email, string $token, ?string $storeview_id = null): string;
 
     /**
      * GET doi confirm webhook from Maileon
@@ -21,6 +20,5 @@ interface MaileonWebhookInterface
      * @param string $storeview_id
      * @return string
      */
- 
-    public function getDoiConfirmWebhook($email, $token, $storeview_id);
+    public function getDoiConfirmWebhook(string $email, string $token, string $storeview_id): string;
 }

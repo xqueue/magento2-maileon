@@ -1,14 +1,19 @@
 <?php
 namespace Xqueue\Maileon\Model\ResourceModel\MaileonQueue;
 
-class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection
+use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
+
+class Collection extends AbstractCollection
 {
     protected $_idFieldName = 'id';
-    protected $_eventPrefix = 'maileon_syncplugin_queue_collection';
+    protected $_eventPrefix = 'xqueue_maileon_queue_collection';
     protected $_eventObject = 'queue_collection';
 
-    protected function _construct()
+    protected function _construct(): void
     {
-        $this->_init('Xqueue\Maileon\Model\MaileonQueue', 'Xqueue\Maileon\Model\ResourceModel\MaileonQueue');
+        $this->_init(
+            \Xqueue\Maileon\Model\MaileonQueue::class,
+            \Xqueue\Maileon\Model\ResourceModel\MaileonQueue::class
+        );
     }
 }

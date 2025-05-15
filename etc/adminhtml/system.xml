@@ -4,173 +4,229 @@
         <tab id="maileon" translate="label" sortOrder="10">
             <label>Maileon</label>
         </tab>
-        <section id="syncplugin" translate="label" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
+        <section id="xqueue-maileon" translate="label" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
             <class>separator-top</class>
             <label>Settings</label>
             <tab>maileon</tab>
-            <resource>Maileon_SyncPlugin::maileon_configuration</resource>
+            <resource>Xqueue_Maileon::config</resource>
             <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>General Maileon Configuration</label>
                 <field id="api_key" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Maileon Api Key</label>
                     <comment>API Key from Maileon system.</comment>
                 </field>
-                <field id="print_curl" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Print CURL Debug Data</label>
-                    <comment>This mode is for additional output when debugging.</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
-                </field>
             </group>
             <group id="newsletter_settings" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Newsletter Subscribers Settings</label>
                 <field id="active_modul" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Active</label>
-                    <comment>Enable this module?</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Enabled</label>
+                    <comment>Enable or disable the newsletter subscriber functionality.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="permission" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Initial Permission</label>
-                    <comment>This is the permission a newsletter subscriber will be created in maileon with. Usually NONE (no permission) is the correct choice.</comment>
+                    <comment>Defines the default permission level assigned to a new newsletter subscriber in Maileon. In most cases, "NONE" (no permission) is the appropriate choice.</comment>
                     <source_model>Xqueue\Maileon\Model\Config\ListPermission</source_model>
                 </field>
                 <field id="doi_process" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>DOI process</label>
-                    <comment>Send a Double-Opt-In mail from Maileon?</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Double Opt-In Process</label>
+                    <comment>Send a Double Opt-In email to the subscriber via Maileon.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="doi_plus_process" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>DOI+ process</label>
-                    <comment>Request DOI+ (Double-Opt-In with permission for single user tracking). Requires 'DOI Process' to be enabled.</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Double Opt-In Plus (DOI+)</label>
+                    <comment>
+                        Enables DOI+ (Double Opt-In with consent for individual user tracking).
+                        Requires "Double Opt-In Process" to be enabled.
+                    </comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="doi_key" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Doi Mailing ID</label>
-                    <comment>If 'DOI process_ enabled, the DOI mailing with the given key should be used. If left blank, the default DOI mailing will be sent. Default [blank].</comment>
+                    <label>DOI Mailing ID</label>
+                    <comment>
+                        If the Double Opt-In Process is enabled, this ID will be used to select a specific DOI mailing in Maileon.
+                        Leave blank to use the default DOI mailing.
+                    </comment>
                 </field>
                 <field id="unsubscribe_token" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Unsubscription Hook Token</label>
-                    <comment>This is the token that has to be passed as a parameter with the call of the unsubscription webhook from Maileon. Use parameter token=</comment>
+                    <label>Unsubscription Webhook Token</label>
+                    <comment>
+                        The token that must be included as a parameter when Maileon calls the unsubscription webhook.
+                        Use the parameter: token=
+                    </comment>
                 </field>
                 <field id="doi_token" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>DOI Confirmation Hook Token</label>
-                    <comment>This is the token that has to be passed as a parameter with the call of the DOI confirmation webhook from Maileon. Use parameter token=</comment>
+                    <label>DOI Confirmation Webhook Token</label>
+                    <comment>
+                        The token that must be included as a parameter when Maileon calls the DOI confirmation webhook.
+                        Use the parameter: token=
+                    </comment>
                 </field>
                 <field id="unsubscribe_all_emails" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Unsubscribe All Emails</label>
-                    <comment>If using different storeviews, the same email can be subscribed several times in Magento (since Magento 2.4). As each contact can be distributed among different Maileon newsletter accounts, Magento needs to know the storeview to mark contacts as "subscribed" or "unsubscribed". Maileon realizes this by passing the storeview ID along the calls but if it is not available, this option handels the behavior. If set to true and storeview_id is missing, all contacts with the same email address will be unsubscribed. If set to false, the unsubscription will be ignored, so best is to properly set up the parameter passing and/or setting this to true.</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Unsubscribe All Matching Emails</label>
+                    <comment>
+                        Since Magento 2.4, the same email address can be subscribed multiple times across different store views.
+                        In Maileon, contacts may belong to different newsletter accounts per store view, so Magento needs the store view ID to unsubscribe a specific contact correctly.
+                        If the storeview_id is missing:
+                        - Yes: all Maileon contacts with the matching email will be unsubscribed.
+                        - No: the unsubscription will be ignored.
+
+                        It is recommended to configure proper store view ID passing and/or enable this option.
+                    </comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="disable_request_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Disable confirmation request email</label>
-                    <comment>Disable Magento confirmation request email?</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Disable Newsletter Confirmation Request Email</label>
+                    <comment>Disable Magento's built-in newsletter confirmation request email for newsletter subscriptions.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="disable_success_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Disable success email</label>
-                    <comment>Disable Magento subscription success email?</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Disable Newsletter Subscription Success Email</label>
+                    <comment>Disable Magento's default newsletter subscription success email sent after newsletter subscription confirmation.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="disable_unsubscription_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Disable unsubscription email</label>
-                    <comment>Disable Magento unsubscription email?</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Disable Unsubscription Email</label>
+                    <comment>Disable Magento's default email sent when a customer unsubscribes from the newsletter.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
             <group id="orders" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Orders Confirmation Settings</label>
                 <field id="active_modul" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Active</label>
-                    <comment>Enable this module?</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Enabled</label>
+                    <comment>Enable sending order confirmation data to Maileon as a contact event.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="disable_order_emails" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Order Confirmation Email</label>
+                    <comment>Disable Magento's default order confirmation email sent after a successful checkout.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="buyers_permission_enabled" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Enable separate permission for buyers</label>
-                    <comment>Enable separate permission for buyers?</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Enable Separate Permission for Buyers</label>
+                    <comment>Enable a separate permission level for customers who complete a purchase.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="buyers_transaction_permission" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Buyers permission</label>
-                    <comment>Buyers permission</comment>
+                    <label>Buyers Permission</label>
+                    <comment>Permission level to assign to customers who place an order.</comment>
                     <source_model>Xqueue\Maileon\Model\Config\ListPermission</source_model>
                 </field>
             </group>
             <group id="customer_related_transactions" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Customer Related Email Notifications</label>
                 <field id="credentials_changed" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Customer credentials changed (password and/or email)</label>
-                    <comment>Send email notification from Maileon, when customer credentials changed</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Customer Credentials Changed (Password and/or Email)</label>
+                    <comment>Send a contact event to Maileon when a customer's password or email address is changed.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="disable_credential_changed_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Customer Credentials Changed Email</label>
+                    <comment>Disable Magento's default customer credentials changed email.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="password_reminder" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Customer password reminder</label>
-                    <comment>Send customer password reminder email notification from Maileon</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Customer Password Reminder</label>
+                    <comment>Send a contact event to Maileon when a customer requests a password reminder.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="disable_password_reminder_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Password Reminder Email</label>
+                    <comment>Disable Magento's default password reminder email.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="password_reset_confirm" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Customer password reset confirmation</label>
-                    <comment>Send customer password reset confirmation email notification from Maileon</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Customer Password Reset Confirmation</label>
+                    <comment>Send a contact event to Maileon when a customer successfully resets their password.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="disable_password_reset_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Password Reset Email</label>
+                    <comment>Disable Magento's default password reset email.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="new_account" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>New account</label>
-                    <comment>Send email with new account related information from Maileon</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>New Account Notification</label>
+                    <comment>Send a contact event to Maileon with information related to a newly created customer account.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="disable_new_account_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable New Account Email</label>
+                    <comment>Disable Magento's default new account email.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
             <group id="order_related_transactions" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Order Related Email Notifications</label>
-                <field id="creditmemo" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Payment status change</label>
-                    <comment>Send payment status change email notifications from Maileon</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                <field id="credit_memo" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Payment Status Change</label>
+                    <comment>Send a contact event to Maileon when the customer's payment status changes (e.g. credit memo created).</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="disable_credit_memo_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Payment Status Change Email</label>
+                    <comment>Disable Magento's default payment status changed email.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="invoice" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Invoice</label>
-                    <comment>Send invoice email notifications from Maileon</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Invoice Created</label>
+                    <comment>Send a contact event to Maileon when an invoice is generated for an order.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="disable_invoice_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Invoice Created Email</label>
+                    <comment>Disable Magento's default invoice created email.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="order_status" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Order status change</label>
-                    <comment>Send order status change email notifications from Maileon</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Order Status Change</label>
+                    <comment>Send a contact event to Maileon when the status of an order changes.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="disable_order_status_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Order Status Changed Email</label>
+                    <comment>Disable Magento's default order status changed email.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="shipment_status" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Shipment status change</label>
-                    <comment>Send shipment status change email notifications from Maileon</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Shipment Status Change</label>
+                    <comment>Send a contact event to Maileon when the status of a shipment changes.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="disable_shipment_status_email" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Shipment Status Changed Email</label>
+                    <comment>Disable Magento's default shipment status changed email.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
             <group id="abandoned_cart" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Abandoned Cart Configuration</label>
                 <field id="active_modul" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Active</label>
-                    <comment>Enable this module?</comment>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
+                    <label>Enabled</label>
+                    <comment>Enable sending abandoned cart events to Maileon.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="permission" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Fallback permission</label>
-                    <comment>If the customer is not a NL subscriber, that will be the permission</comment>
+                    <label>Fallback Permission</label>
+                    <comment>Permission level to assign if the customer is not a newsletter subscriber.</comment>
                     <source_model>Xqueue\Maileon\Model\Config\ListPermission</source_model>
                 </field>
                 <field id="hours" translate="label" type="text" sortOrder="1" showInDefault="1">
-                    <label># Of Hours Before Sending Reminder</label>
-                    <comment>After this many hours, send the order followup email.</comment>
+                    <label>Hours Before Sending Reminder</label>
+                    <comment>Number of hours to wait before sending the order follow-up email.</comment>
                 </field>
                 <field id="shadow_email" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Shadow Email</label>
-                    <comment>If this field is set, a copy of the shopping cart followup email will be sent to this address . Default [blank].</comment>
+                    <comment>If set, a copy of the shopping cart follow-up email will be sent to this address. Leave blank to disable.</comment>
                 </field>
                 <field id="email_override" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Email Override</label>
-                    <comment>If this is populated, customers will not recieve shopping cart folowup emails. Instead mails will be routed to this address. Default [blank].</comment>
-                </field>
-                <field id="active_test_webhook" translate="label" type="select" sortOrder="1" showInDefault="1">
-                    <label>Test Webhook Active</label>
-                    <source_model>Xqueue\Maileon\Model\Config\YesNo</source_model>
-                </field>
-                <field id="test_webhook_token" translate="label" type="text" sortOrder="1" showInDefault="1">
-                    <label>Test Webhook Token</label>
-                    <comment>This is the token that has to be passed as a parameter with the call of the abandoned cart test webhook. Use parameter token=</comment>
+                    <comment>
+                        If set, shopping cart follow-up emails will not be sent to customers.
+                        Instead, all emails will be routed to this address.
+                        Leave blank to disable.
+                    </comment>
                 </field>
             </group>
         </section>

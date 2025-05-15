@@ -1,15 +1,18 @@
 <?php
 namespace Xqueue\Maileon\Model\ResourceModel;
 
-class MaileonQueue extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
+use Magento\Framework\Model\ResourceModel\Db\Context;
+
+class MaileonQueue extends AbstractDb
 {
     public function __construct(
-        \Magento\Framework\Model\ResourceModel\Db\Context $context
+        Context $context
     ) {
         parent::__construct($context);
     }
     
-    protected function _construct()
+    protected function _construct(): void
     {
         $this->_init('maileon_queue', 'id');
     }

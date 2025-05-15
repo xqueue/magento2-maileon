@@ -3,35 +3,19 @@
 namespace Xqueue\Maileon\Model\Maileon;
 
 use de\xqueue\maileon\api\client\account\AccountService;
+use Xqueue\Maileon\Helper\Config;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Log\LoggerInterface;
 use stdClass;
 
 class PluginStatusReporterService
 {
-    const XSIC_ID = '10017';
-
-    const XSIC_CHECKSUM = 'L9_Z6734NbgB_xk7D23hRJZs';
-
-    const XSIC_URL = 'https://integrations.maileon.com/xsic/tx.php';
-    /**
-     * @var \Psr\Log\LoggerInterface
-     */
-    protected $logger;
-
-    /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
-     */
-    protected $scopeConfig;
-
     public function __construct(
-        \Psr\Log\LoggerInterface $logger,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-    ) {
-        $this->logger = $logger;
-        $this->scopeConfig = $scopeConfig;
-    }
+        protected LoggerInterface $logger,
+        protected Config $config
+    ) {}
 
     /**
      * @throws Exception
@@ -73,8 +57,8 @@ class PluginStatusReporterService
         }
 
         $parameters = [
-            'pluginID' => self::XSIC_ID,
-            'checkSum' => self::XSIC_CHECKSUM,
+            'pluginID' => Config::XSIC_ID,
+            'checkSum' => Config::XSIC_CHECKSUM,
             'accountID' => $accountParameters['accountID'],
             'clientHash' => $accountParameters['clientHash'],
             'event' => $type,
@@ -82,7 +66,7 @@ class PluginStatusReporterService
 
         $client = new Client();
 
-        $uri = self::XSIC_URL . '?' . http_build_query($parameters);
+        $uri = Config::XSIC_URL . '?' . http_build_query($parameters);
 
         $response = $client->get($uri);
 
@@ -136,9 +120,7 @@ class PluginStatusReporterService
      */
     protected function getMaileonApiKey(): string
     {
-        $apiKey = (string) $this->scopeConfig->getValue(
-            'syncplugin/general/api_key'
-        );
+        $apiKey = $this->config->getApiKey();
 
         if ($apiKey === '') {
             throw new Exception('Maileon API key not found!');

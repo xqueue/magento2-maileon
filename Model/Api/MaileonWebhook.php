@@ -1,173 +1,178 @@
 <?php
  
 namespace Xqueue\Maileon\Model\Api;
- 
-use Psr\Log\LoggerInterface;
-use Magento\Store\Model\ScopeInterface;
+
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Store\Model\StoreManagerInterface;
+use Throwable;
+use Xqueue\Maileon\Api\MaileonWebhookInterface;
+use Xqueue\Maileon\Helper\SubscriberHelper;
+use Xqueue\Maileon\Logger\Logger;
+use Xqueue\Maileon\Helper\Config;
 use Magento\Framework\Exception\NoSuchEntityException;
  
-class MaileonWebhook
+class MaileonWebhook implements MaileonWebhookInterface
 {
-    protected $logger;
-    protected $subscriber;
-    protected $storeManager;
- 
     public function __construct(
-        LoggerInterface $logger,
-        \Magento\Newsletter\Model\Subscriber $subscriber,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
-    ) {
-        $this->logger = $logger;
-        $this->subscriber = $subscriber;
-        $this->storeManager = $storeManager;
-    }
- 
+        private Config $config,
+        private StoreManagerInterface $storeManager,
+        private SubscriberHelper $subscriberHelper,
+        private Logger $logger
+    ) {}
+
     /**
      * @inheritdoc
      */
- 
-    public function getUnsubscribeWebhook($email, $token, $storeview_id = null)
+    public function getUnsubscribeWebhook(string $email, string $token, ?string $storeview_id = null): string
     {
-        $response = ['success' => false];
-        $email = preg_replace('/\s+/', '+', $email);
+        $storeId = $storeview_id;
+        $email = $this->normalizeEmail($email);
 
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-
-        $unsubscribe_token = $objectManager
-            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
-            ->getValue('syncplugin/newsletter_settings/unsubscribe_token', ScopeInterface::SCOPE_STORE);
-
-        $unsubscribe_all_emails = $objectManager
-            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
-            ->getValue('syncplugin/newsletter_settings/unsubscribe_all_emails', ScopeInterface::SCOPE_STORE);
- 
-        try {
-            if (!empty($email) && !empty($token)) {
-                if ($token == $unsubscribe_token) {
-                    if (!empty($storeview_id)) {
-                        try {
-                            $store = $this->storeManager->getStore((string) $storeview_id);
-                        } catch (NoSuchEntityException $e) {
-                            $response = ['success' => false, 'message' => (string) $e->getMessage()];
-                            return json_encode($response);
-                        }
-
-                        $this->storeManager->setCurrentStore((string) $storeview_id);
-
-                        $subscriber = $this->subscriber->loadByEmail($email);
-
-                        if ($subscriber->isSubscribed()) {
-                            $subscriber->unsubscribe();
-                            $response = [
-                                'success' => true,
-                                'message' => 'Unsubscribed: ' . $email . ', Store Id: ' . $storeview_id
-                            ];
-                        } else {
-                            $response = [
-                                'success' => false,
-                                'message' => 'Not exsisting subscriber! Email: ' . $email . ', Store Id: ' . $storeview_id
-                            ];
-                        }
-                    } else {
-                        if (filter_var($unsubscribe_all_emails, FILTER_VALIDATE_BOOLEAN)) {
-                            $stores = $this->storeManager->getStores();
-                            $unsubscribed_from = array();
-
-                            foreach ($stores as $store) {
-                                $this->storeManager->setCurrentStore($store->getId());
-
-                                $subscriber = $this->subscriber->loadByEmail($email);
-
-                                if ($subscriber->isSubscribed()) {
-                                    $subscriber->unsubscribe();
-                                    $unsubscribed_from[] = $store->getId();
-                                }
-                            }
-
-                            if (!empty($unsubscribed_from)) {
-                                $response = [
-                                    'success' => true,
-                                    'message' => 'Unsubscribed: ' . $email . ', Store Id: ' . implode(',', $unsubscribed_from)
-                                ];
-                            } else {
-                                $response = [
-                                    'success' => false,
-                                    'message' => 'Not exsisting subscriber! Email: ' . $email
-                                ];
-                            }
-                        } else {
-                            $response = [
-                                'success' => false,
-                                'message' => 'Storeview id is empty and unsubscribe all email disabled! Email: ' . $email
-                            ];
-                        }
-                    }
-                } else {
-                    $response = ['success' => false, 'message' => 'Bad unsubscriber token!'];
-                }
-            } else {
-                $response = ['success' => false, 'message' => 'Empty email or token params!'];
-            }
-        } catch (\Exception $e) {
-            $response = ['success' => false, 'message' => (string) $e->getMessage()];
-            $this->logger->info((string) $e->getMessage());
+        if (!$this->isValidToken($token, $this->config->getUnsubscribeWebhookToken())) {
+            return $this->errorResponse('Bad unsubscriber token!');
         }
 
-        $returnArray = json_encode($response);
-        return $returnArray;
+        if (empty($email) || empty($token)) {
+            return $this->errorResponse('Empty email or token params!');
+        }
+
+        try {
+            if ($storeId) {
+                return $this->unsubscribeFromStore($email, $storeId);
+            }
+
+            if ($this->config->isUnsubscribeAllEnabled()) {
+                return $this->unsubscribeFromAllStores($email);
+            }
+
+            return $this->errorResponse('Storeview id is empty and unsubscribe all email disabled! Email: ' . $email);
+
+        } catch (Throwable $exception) {
+            $this->logger->error($exception->getMessage(), [
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
+            return $this->errorResponse($exception->getMessage());
+        }
     }
 
     /**
      * @inheritdoc
      */
- 
-    public function getDoiConfirmWebhook($email, $token, $storeview_id)
+    public function getDoiConfirmWebhook(string $email, string $token, string $storeview_id): string
     {
-        $response = ['success' => false];
-        $email = preg_replace('/\s+/', '+', $email);
+        $storeId = $storeview_id;
+        $email = $this->normalizeEmail($email);
 
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-
-        $doi_token = $objectManager
-            ->get('Magento\Framework\App\Config\ScopeConfigInterface')
-            ->getValue('syncplugin/newsletter_settings/doi_token', ScopeInterface::SCOPE_STORE);
- 
-        try {
-            if (!empty($email) && !empty($token)) {
-                if ($token == $doi_token) {
-                    if (!empty($storeview_id)) {
-                        try {
-                            $store = $this->storeManager->getStore((string) $storeview_id);
-                        } catch (NoSuchEntityException $e) {
-                            $response = ['success' => false, 'message' => (string) $e->getMessage()];
-                            return json_encode($response);
-                        }
-                        
-                        $this->storeManager->setCurrentStore((string) $storeview_id);
-                    }
-
-                    $subscriber = $this->subscriber->loadByEmail($email);
-
-                    if (!empty($subscriber->getEmail())) {
-                        $confirm_code = $subscriber->getCode();
-                        $subscriber->confirm($confirm_code);
-
-                        $response = ['success' => true, 'message' => 'Confirmed: ' . $email];
-                    } else {
-                        $response = ['success' => false, 'message' => 'Not exsisting subscriber!'];
-                    }
-                } else {
-                    $response = ['success' => false, 'message' => 'Bad DOI token!'];
-                }
-            } else {
-                $response = ['success' => false, 'message' => 'Empty email or token params!'];
-            }
-        } catch (\Exception $e) {
-            $response = ['success' => false, 'message' => (string) $e->getMessage()];
-            $this->logger->info((string) $e->getMessage());
+        if (!$this->isValidToken($token, $this->config->getDOIWebhookToken())) {
+            return $this->errorResponse('Bad DOI token!');
         }
 
-        $returnArray = json_encode($response);
-        return $returnArray;
+        if (empty($email) || empty($token)) {
+            return $this->errorResponse('Empty email or token params!');
+        }
+
+        try {
+            if (!$this->isValidStoreId($storeId)) {
+                return $this->errorResponse("Invalid store ID: $storeId");
+            }
+
+            $this->storeManager->setCurrentStore($storeId);
+
+            $subscriber = $this->subscriberHelper->getSubscriberByEmail($email);
+
+            if ($subscriber) {
+                $subscriber->confirm($subscriber->getCode());
+                return $this->successResponse("Confirmed: $email");
+            }
+
+            return $this->errorResponse("Not existing subscriber!");
+        } catch (Throwable $exception) {
+            $this->logger->error($exception->getMessage(), [
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
+            return $this->errorResponse($exception->getMessage());
+        }
+    }
+
+    private function normalizeEmail(string $email): string
+    {
+        return preg_replace('/\s+/', '+', $email);
+    }
+
+    private function isValidToken(string $token, string $expectedToken): bool
+    {
+        return $token === $expectedToken;
+    }
+
+    private function isValidStoreId(string $storeId): bool
+    {
+        try {
+            $this->storeManager->getStore($storeId);
+            return true;
+        } catch (NoSuchEntityException) {
+            return false;
+        }
+    }
+
+    /**
+     * @throws LocalizedException
+     */
+    private function unsubscribeFromStore(string $email, string $storeId): string
+    {
+        if (!$this->isValidStoreId($storeId)) {
+            return $this->errorResponse("Invalid store ID: $storeId");
+        }
+
+        $this->storeManager->setCurrentStore($storeId);
+        $subscriber = $this->subscriberHelper->getSubscriberByEmail($email);
+
+        if (!$subscriber) {
+            return $this->errorResponse("Subscriber not found for email: $email, Store Id: $storeId");
+        }
+
+        if ($subscriber->isSubscribed()) {
+            $subscriber->unsubscribe();
+            return $this->successResponse("Unsubscribed: $email, Store Id: $storeId");
+        }
+
+        return $this->errorResponse("Subscriber is not subscribed: $email, Store Id: $storeId");
+    }
+
+    /**
+     * @throws LocalizedException
+     */
+    private function unsubscribeFromAllStores(string $email): string
+    {
+        $unsubscribedFrom = [];
+
+        foreach ($this->storeManager->getStores() as $store) {
+            $this->storeManager->setCurrentStore($store->getId());
+            $subscriber = $this->subscriberHelper->getSubscriberByEmail($email);
+
+            if ($subscriber && $subscriber->isSubscribed()) {
+                $subscriber->unsubscribe();
+                $unsubscribedFrom[] = $store->getId();
+            }
+        }
+
+        if (!empty($unsubscribedFrom)) {
+            return $this->successResponse("Unsubscribed: $email, Store Ids: " . implode(',', $unsubscribedFrom));
+        }
+
+        return $this->errorResponse("Subscriber not found or already unsubscribed in all stores for email: $email");
+    }
+
+    private function successResponse(string $message): string
+    {
+        return json_encode(['success' => true, 'message' => $message]);
+    }
+
+    private function errorResponse(string $message): string
+    {
+        return json_encode(['success' => false, 'message' => $message]);
     }
 }

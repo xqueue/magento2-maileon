@@ -1,83 +1,114 @@
-**Magento 2 Maileon module**
+# Magento 2 Maileon Module
 
+This Magento 2 extension integrates [Maileon](https://maileon.com) — the professional email marketing platform — with your Magento store. It enables newsletter contact synchronization, double opt-in (DOI) handling, abandoned cart tracking, and more.
 
-## Install the module
+---
 
-### Below version 1.0.8
+## 🛠️ Installation
 
-Get the ZIP package
+Choose the appropriate method depending on the version you are installing.
 
-First step is copy the Maileon module to `app/code`. If the `code` directory don't exsist, create a new directory to `app` named `code`.
+---
 
-### From version 1.8.1
+### 📦 Install from ZIP using Composer (version ≥ 1.8.1)
 
-Get the ZIP package
+1. Copy the module into your Magento root directory, for example:
 
-Copy the Maileon module to the Magento root folder (/sources/magento-2/Xqueue/Maileon/).
-Add the following line to the Magento composer.json:
+   ```
+   sources/magento-2/Xqueue/Maileon/
+   ```
 
-~~~
-"require": {
-    "xqueue/module-maileon": "^1.8"
-},
+2. Modify your `composer.json` to include:
 
-"repositories": [
-    {
-        "type": "composer",
-        "url": "https://repo.magento.com/"
-    },
-    {
-        "name": "xqueue/module-maileon",
-        "type": "path",
-        "url": "sources/magento-2/Xqueue/Maileon"
-    }
-],
-~~~
+   ```json
+   "require": {
+       "xqueue/module-maileon": "^1.8"
+   },
+   "repositories": [
+       {
+           "type": "composer",
+           "url": "https://repo.magento.com/"
+       },
+       {
+           "name": "xqueue/module-maileon",
+           "type": "path",
+           "url": "sources/magento-2/Xqueue/Maileon"
+       }
+   ]
+   ```
 
-Run composer update at command line
+3. Run the following command:
 
-### From version 1.9.5
+   ```bash
+   composer update
+   ```
 
-~~~
-composer req xqueue/module-maileon
-~~~
+---
 
-### Enable the module
+### 📦 Install via Composer (version ≥ 1.9.5)
 
-Before enable the module, we must check to make sure Magento has recognize our module or not by enter the following at the command line:
+If the module is available through a Composer repository:
 
-~~~
-php bin/magento module:status
-~~~
+```bash
+composer require xqueue/module-maileon
+```
 
-If you follow above step, you will see this in the result:
+---
 
-~~~
-List of disabled modules:
-Xqueue_Maileon
-~~~
+## ✅ Enable the module
 
-This means the module has recognized by the system but it is still disabled. Run this command to enable it:
+1. Check if Magento recognizes the module:
 
-~~~
-php bin/magento module:enable Xqueue_Maileon
-~~~
+   ```bash
+   php bin/magento module:status
+   ```
 
-The module has enabled successfully if you saw this result:
+   You should see:
 
-~~~
-The following modules has been enabled:
-- Xqueue_Maileon
-~~~
+   ```
+   List of disabled modules:
+   Xqueue_Maileon
+   ```
 
-This’s the first time you enable this module so Magento require to check and upgrade module database. We need to run this comment:
+2. Enable the module:
 
-~~~
-php bin/magento setup:upgrade
-~~~
+   ```bash
+   php bin/magento module:enable Xqueue_Maileon
+   ```
 
-Now you can check under `Stores -> Configuration -> Maileon` that the module is present.
+3. Register and install the module:
 
-## Documentation
+   ```bash
+   php bin/magento setup:upgrade
+   ```
 
-* [User Documentation](https://xqueue.atlassian.net/wiki/spaces/MSI/pages/224199860/Magento+2)
+4. (For production mode only) Compile dependencies and flush cache:
+
+   ```bash
+   php bin/magento setup:di:compile
+   php bin/magento cache:flush
+   ```
+
+---
+
+## ⚙️ Configuration
+
+Once installed, go to:
+
+```
+Stores → Configuration → Maileon
+```
+
+...to configure your API key, permissions, and synchronization options.
+
+---
+
+## 📚 Documentation
+
+Full user documentation is available at:
+
+👉 [Maileon Magento 2 Documentation](https://xqueue.atlassian.net/wiki/spaces/MSI/pages/224199860/Magento+2)
+
+---
+
+© XQueue GmbH – All rights reserved.

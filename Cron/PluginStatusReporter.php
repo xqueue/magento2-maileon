@@ -2,35 +2,27 @@
 
 namespace Xqueue\Maileon\Cron;
 
-use Exception;
-use GuzzleHttp\Exception\GuzzleException;
+use Throwable;
+use Xqueue\Maileon\Model\Maileon\PluginStatusReporterService;
+use Xqueue\Maileon\Logger\Logger;
 
 class PluginStatusReporter
 {
-    /**
-     * @var \Psr\Log\LoggerInterface
-     */
-    protected $logger;
-
-    /**
-     * @var \Xqueue\Maileon\Model\Maileon\PluginStatusReporterService
-     */
-    protected $pluginStatusReporterService;
-
     public function __construct(
-        \Psr\Log\LoggerInterface $logger,
-        \Xqueue\Maileon\Model\Maileon\PluginStatusReporterService $pluginStatusReporterService
-    ) {
-        $this->logger = $logger;
-        $this->pluginStatusReporterService = $pluginStatusReporterService;
-    }
+        private Logger $logger,
+        private PluginStatusReporterService $pluginStatusReporterService
+    ) {}
 
-    public function execute()
+    public function execute(): void
     {
         try {
             $this->pluginStatusReporterService->sendHeartbeatReport();
-        } catch (Exception|GuzzleException $e) {
-            $this->logger->error($e->getMessage());
+        } catch (Throwable $exception) {
+            $this->logger->error($exception->getMessage(), [
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
         }
     }
 }

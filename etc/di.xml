@@ -4,9 +4,21 @@
 
     <preference for="Xqueue\Maileon\Api\MaileonWebhookInterface" type="Xqueue\Maileon\Model\Api\MaileonWebhook"/>
 
-    <preference for="Xqueue\Maileon\Api\TestSendAbandonedCartsEmailsInterface" type="Xqueue\Maileon\Model\Api\TestSendAbandonedCartsEmails"/>
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="xqueue_maileon_mark_abandoned_carts" xsi:type="object">Xqueue\Maileon\Console\Command\MarkAbandonedCartsCommand</item>
+            </argument>
+        </arguments>
+    </type>
 
-    <preference for="Xqueue\Maileon\Api\TestMarkAbandonedCartsInterface" type="Xqueue\Maileon\Model\Api\TestMarkAbandonedCarts"/>
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="xqueue_maileon_send_abandoned_carts" xsi:type="object">Xqueue\Maileon\Console\Command\SendAbandonedCartsCommand</item>
+            </argument>
+        </arguments>
+    </type>
 
     <type name="Xqueue\Maileon\Logger\Handler">
         <arguments>
@@ -23,56 +35,77 @@
         </arguments>
     </type>
 
+    <type name="Magento\Framework\Mail\Template\TransportBuilder">
+        <plugin name="xqueue_maileon_override_recipient"
+                type="Xqueue\Maileon\Plugin\OverrideRecipient"
+                sortOrder="20"/>
+    </type>
+
     <type name="Magento\Newsletter\Controller\Subscriber\NewAction">
-        <plugin name="MaileonSyncPluginControllerSubscriber" type="Xqueue\Maileon\Controller\Subscriber" sortOrder="1"/>
-    </type>
-
-    <type name="Magento\Newsletter\Controller\Manage\Save">
-        <plugin name="MaileonSyncPluginControllerManage" type="Xqueue\Maileon\Controller\Manage" sortOrder="1"/>
-    </type>
-
-    <type name="Magento\Customer\Controller\Account\CreatePost">
-        <plugin name="MaileonSyncPluginControllerAccount" type="Xqueue\Maileon\Controller\Account" sortOrder="1"/>
+        <plugin name="xqueue_maileon_subscriber_new_action"
+                type="Xqueue\Maileon\Plugin\Newsletter\Controller\Subscriber\NewAction"
+                sortOrder="10"/>
     </type>
 
     <type name="Magento\Newsletter\Model\Subscriber">
-        <plugin name="MaileonSyncPluginModelSubscriber" type="Xqueue\Maileon\Model\Newsletter\Subscriber" sortOrder="1" disabled="false"/>
+        <plugin name="xqueue_maileon_subscriber_model"
+                type="Xqueue\Maileon\Plugin\Newsletter\Subscriber"
+                sortOrder="10"
+                disabled="false"/>
     </type>
 
     <type name="Magento\Customer\Model\EmailNotification">
-        <plugin name="MaileonSyncPluginModelCustomerEmailNotification" type="Xqueue\Maileon\Model\Customer\EmailNotification" sortOrder="1"/>
+        <plugin name="xqueue_maileon_customer_email_notification"
+                type="Xqueue\Maileon\Plugin\Customer\EmailNotification"
+                sortOrder="10"/>
     </type>
 
     <type name="Magento\Sales\Model\Order\Email\Sender\CreditmemoCommentSender">
-        <plugin name="MaileonSyncPluginModelOrderEmailCreditmemoCommentSender" type="Xqueue\Maileon\Model\Order\Email\CreditmemoCommentSender" sortOrder="1"/>
+        <plugin name="xqueue_maileon_credit_memo_comment_sender"
+                type="Xqueue\Maileon\Plugin\Order\Email\CreditmemoCommentSender"
+                sortOrder="10"/>
     </type>
 
     <type name="Magento\Sales\Model\Order\Email\Sender\CreditmemoSender">
-        <plugin name="MaileonSyncPluginModelOrderEmailCreditmemoSender" type="Xqueue\Maileon\Model\Order\Email\CreditmemoSender" sortOrder="1"/>
+        <plugin name="xqueue_maileon_credit_memo_sender"
+                type="Xqueue\Maileon\Plugin\Order\Email\CreditmemoSender"
+                sortOrder="10"/>
     </type>
 
     <type name="Magento\Sales\Model\Order\Email\Sender\InvoiceCommentSender">
-        <plugin name="MaileonSyncPluginModelOrderEmailInvoiceCommentSender" type="Xqueue\Maileon\Model\Order\Email\InvoiceCommentSender" sortOrder="1"/>
+        <plugin name="xqueue_maileon_invoice_comment_sender"
+                type="Xqueue\Maileon\Plugin\Order\Email\InvoiceCommentSender"
+                sortOrder="10"/>
     </type>
 
     <type name="Magento\Sales\Model\Order\Email\Sender\InvoiceSender">
-        <plugin name="MaileonSyncPluginModelOrderEmailInvoiceSender" type="Xqueue\Maileon\Model\Order\Email\InvoiceSender" sortOrder="1"/>
+        <plugin name="xqueue_maileon_invoice_sender"
+                type="Xqueue\Maileon\Plugin\Order\Email\InvoiceSender"
+                sortOrder="10"/>
     </type>
 
     <type name="Magento\Sales\Model\Order\Email\Sender\OrderSender">
-        <plugin name="MaileonSyncPluginModelOrderEmailOrderSender" type="Xqueue\Maileon\Model\Order\Email\OrderSender" sortOrder="1"/>
+        <plugin name="xqueue_maileon_order_sender"
+                type="Xqueue\Maileon\Plugin\Order\Email\OrderSender"
+                sortOrder="10"/>
     </type>
 
     <type name="Magento\Sales\Model\Order\Email\Sender\OrderCommentSender">
-        <plugin name="MaileonSyncPluginModelOrderEmailOrderCommentSender" type="Xqueue\Maileon\Model\Order\Email\OrderCommentSender" sortOrder="1"/>
+        <plugin name="xqueue_maileon_order_comment_sender"
+                type="Xqueue\Maileon\Plugin\Order\Email\OrderCommentSender"
+                sortOrder="10"/>
     </type>
 
     <type name="Magento\Sales\Model\Order\Email\Sender\ShipmentCommentSender">
-        <plugin name="MaileonSyncPluginModelOrderEmailShipmentCommentSender" type="Xqueue\Maileon\Model\Order\Email\ShipmentCommentSender" sortOrder="1"/>
+        <plugin name="xqueue_maileon_shipment_comment_sender"
+                type="Xqueue\Maileon\Plugin\Order\Email\ShipmentCommentSender"
+                sortOrder="10"/>
     </type>
 
     <type name="Magento\Sales\Model\Order\Email\Sender\ShipmentSender">
-        <plugin name="MaileonSyncPluginModelOrderEmailShipmentSender" type="Xqueue\Maileon\Model\Order\Email\ShipmentSender" sortOrder="1"/>
+        <plugin name="xqueue_maileon_shipment_sender"
+                type="Xqueue\Maileon\Plugin\Order\Email\ShipmentSender"
+                sortOrder="10"/>
     </type>
 
 </config>
