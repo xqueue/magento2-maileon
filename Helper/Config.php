@@ -610,7 +610,7 @@ class Config
         return isset($map[$type]) && $this->scopeConfig->isSetFlag($map[$type]);
     }
 
-    public function getLocale(int $storeId = null): ?string
+    public function getLocale(?int $storeId = null): ?string
     {
         return $this->scopeConfig->getValue(
             Data::XML_PATH_DEFAULT_LOCALE,

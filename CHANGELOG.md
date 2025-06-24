@@ -1,3 +1,6 @@
+# 1.11.1
+- Compatibility update for PHP 8.4: explicitly declared nullable `$storeId` type in `getLocale()` method.
+
 # 1.10.0
 - Contact events are now reliably sent to Maileon whenever Magento sends a transactional email (order, invoice etc.).
 - Email sending logic now supports separate enable/disable toggles for each type (order, invoice, shipment, etc.).
