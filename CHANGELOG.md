@@ -1,3 +1,6 @@
+# 1.11.2
+- Renamed invalid section id in system.xml to comply with Magento’s naming requirements.
+
 # 1.11.1
 - Compatibility update for PHP 8.4: explicitly declared nullable `$storeId` type in `getLocale()` method.
 
