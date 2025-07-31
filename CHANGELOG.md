@@ -1,7 +1,10 @@
-# 1.11.2
+# 1.10.3
+- Added the “other” permission option to the configuration settings.
+
+# 1.10.2
 - Renamed invalid section id in system.xml to comply with Magento’s naming requirements.
 
-# 1.11.1
+# 1.10.1
 - Compatibility update for PHP 8.4: explicitly declared nullable `$storeId` type in `getLocale()` method.
 
 # 1.10.0

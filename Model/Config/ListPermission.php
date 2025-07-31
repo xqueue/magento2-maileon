@@ -13,7 +13,8 @@ class ListPermission implements OptionSourceInterface
             ['value' => 'soi', 'label' => 'Single Opt-in'],
             ['value' => 'coi', 'label' =>'Confirmed Opt-in'],
             ['value' => 'doi', 'label' => 'Double Opt-in'],
-            ['value' => 'doi+', 'label' => 'Double Opt-in Plus']
+            ['value' => 'doi+', 'label' => 'Double Opt-in Plus'],
+            ['value' => 'other', 'label' => 'Other']
         ];
     }
 }
