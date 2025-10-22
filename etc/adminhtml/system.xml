@@ -156,6 +156,11 @@
                     <comment>Disable Magento's default new account email.</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="wishlist_product_added" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Wishlist Product Added</label>
+                    <comment>Send a contact event to Maileon when the customer add a product to the wishlist.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
             </group>
             <group id="order_related_transactions" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Order Related Email Notifications</label>
@@ -227,6 +232,27 @@
                         Instead, all emails will be routed to this address.
                         Leave blank to disable.
                     </comment>
+                </field>
+            </group>
+            <group id="nl_subscribers_import" translate="label" type="text" sortOrder="10" showInDefault="1">
+                <label>Newsletter Subscribers Import Settings</label>
+                <field id="enabled" translate="label" type="select" sortOrder="1" showInDefault="1">
+                    <label>Enabled</label>
+                    <comment>Allow importing newsletter subscribers via CLI command</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="permission" translate="label" type="select" sortOrder="1" showInDefault="1">
+                    <label>Maileon permission</label>
+                    <comment>Maileon permission for newly created contacts during import</comment>
+                    <source_model>Xqueue\Maileon\Model\Config\ListPermission</source_model>
+                </field>
+            </group>
+            <group id="order_history_import" translate="label" type="text" sortOrder="10" showInDefault="1">
+                <label>Order History Import Settings</label>
+                <field id="enabled" translate="label" type="select" sortOrder="1" showInDefault="1">
+                    <label>Enabled</label>
+                    <comment>Allow importing order history via CLI command</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
         </section>

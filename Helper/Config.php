@@ -32,6 +32,7 @@ class Config
     public const XML_PATH_DISABLE_PSW_RESET_EMAIL = 'xqueue_maileon/customer_related_transactions/disable_password_reset_email';
     public const XML_PATH_CUSTOMER_TX_NEW_ACCOUNT = 'xqueue_maileon/customer_related_transactions/new_account';
     public const XML_PATH_DISABLE_NEW_ACCOUNT_EMAIL = 'xqueue_maileon/customer_related_transactions/disable_new_account_email';
+    public const XML_PATH_PRODUCT_ADDED_TO_WISHLIST = 'xqueue_maileon/customer_related_transactions/wishlist_product_added';
     public const XML_PATH_ORD_TX_CREDIT_MEMO = 'xqueue_maileon/order_related_transactions/credit_memo';
     public const XML_PATH_DISABLE_CREDIT_MEMO_EMAIL = 'xqueue_maileon/order_related_transactions/disable_credit_memo_email';
     public const XML_PATH_ORD_TX_INVOICE = 'xqueue_maileon/order_related_transactions/invoice';
@@ -45,6 +46,9 @@ class Config
     public const XML_PATH_ABAN_CART_HOURS = 'xqueue_maileon/abandoned_cart/hours';
     public const XML_PATH_ABAN_CART_SHADOW_EMAIL = 'xqueue_maileon/abandoned_cart/shadow_email';
     public const XML_PATH_ABAN_CART_EMAIL_OVERRIDE = 'xqueue_maileon/abandoned_cart/email_override';
+    public const XML_PATH_NL_IMPORT_ENABLED = 'xqueue_maileon/nl_subscribers_import/enabled';
+    public const XML_PATH_NL_IMPORT_PERMISSION = 'xqueue_maileon/nl_subscribers_import/permission';
+    public const XML_PATH_ORDER_HISTORY_IMPORT_ENABLED = 'xqueue_maileon/order_history_import/enabled';
 
     public const ORDER_CONFIRM_TX_NAME = 'magento_orders_v2';
     public const ORDERED_PRODUCTS_TX_NAME = 'magento_orders_extended_v2';
@@ -60,6 +64,7 @@ class Config
     public const PASSWORD_REMINDER_TX_NAME = 'magento_password_reminder_v1';
     public const PASSWORD_RESET_TX_NAME = 'magento_password_reset_confirmation_v1';
     public const NEW_ACCOUNT_TX_NAME = 'magento_new_account_v1';
+    public const WISHLIST_PRODUCT_ADDED_TX_NAME = 'magento_wishlist_added_v1';
 
     public const XSIC_ID = '10017';
     public const XSIC_CHECKSUM = 'L9_Z6734NbgB_xk7D23hRJZs';
@@ -345,6 +350,39 @@ class Config
         'store_name' => 'string',
     ];
 
+    public const WISHLIST_PRODUCT_ADDED_TX_FIELDS = [
+        'customer.id' => 'string',
+        'customer.salutation' => 'string',
+        'customer.fullname' => 'string',
+        'customer.firstname' => 'string',
+        'customer.lastname' => 'string',
+        'customer.address.street' => 'string',
+        'customer.address.hnr' => 'string',
+        'customer.address.zip' => 'string',
+        'customer.address.city' => 'string',
+        'customer.address.state' => 'string',
+        'customer.address.country' => 'string',
+        'product.sku' => 'string',
+        'product.id' => 'string',
+        'product.title' => 'string',
+        'product.description' => 'string',
+        'product.url' => 'string',
+        'product.image_url' => 'string',
+        'product.available_stock' => 'integer',
+        'product.gross_price' => 'float',
+        'product.net_price' => 'float',
+        'product.currency_name' => 'string',
+        'product.currency_symbol' => 'string',
+        'product.categories' => 'string',
+        'product.brand' => 'string',
+        'product.unit' => 'string',
+        'product.weight' => 'string',
+        'product.width' => 'string',
+        'product.height' => 'string',
+        'store_id' => 'string',
+        'store_name' => 'string',
+    ];
+
     public const GENERIC_FIELDS = [
         'generic.string_1' => 'string',
         'generic.string_2' => 'string',
@@ -446,6 +484,10 @@ class Config
             'fields' => self::NEW_ACCOUNT_TX_TYPE_FIELDS,
             'addGeneric' => false
         ],
+        self::WISHLIST_PRODUCT_ADDED_TX_NAME => [
+            'fields' => self::WISHLIST_PRODUCT_ADDED_TX_FIELDS,
+            'addGeneric' => true
+        ],
     ];
 
     public function __construct(
@@ -532,6 +574,11 @@ class Config
         return $this->getFlag(self::XML_PATH_CUSTOMER_TX_NEW_ACCOUNT, $storeId);
     }
 
+    public function isWishlistProductAddTXEnabled(?int $storeId = null): bool
+    {
+        return $this->getFlag(self::XML_PATH_PRODUCT_ADDED_TO_WISHLIST, $storeId);
+    }
+
     public function isCreditMemoTXEnabled(?int $storeId = null): bool
     {
         return $this->getFlag(self::XML_PATH_ORD_TX_CREDIT_MEMO, $storeId);
@@ -578,6 +625,30 @@ class Config
     public function getAbandonedCartOverrideEmail(?int $storeId = null): ?string
     {
         return $this->getValue(self::XML_PATH_ABAN_CART_EMAIL_OVERRIDE, $storeId);
+    }
+
+    public function isNewsletterSubscriberImportEnabled(): bool
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::XML_PATH_NL_IMPORT_ENABLED,
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT
+        );
+    }
+
+    public function getNewsletterSubscriberImportPermission(): ?string
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_NL_IMPORT_PERMISSION,
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT
+        );
+    }
+
+    public function isOrderHistoryImportEnabled(): bool
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::XML_PATH_ORDER_HISTORY_IMPORT_ENABLED,
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT
+        );
     }
 
     public function getStoreEmail(?int $storeId = null): ?string

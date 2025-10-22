@@ -37,4 +37,8 @@
         <observer name="xqueue_maileon_shipment_comment_email_observer"
                   instance="Xqueue\Maileon\Observer\ShipmentCommentEmailObserver"/>
     </event>
+    <event name="wishlist_add_product">
+        <observer name="xqueue_maileon_send_wishlist_event"
+                  instance="Xqueue\Maileon\Observer\WishlistAddProductObserver"/>
+    </event>
 </config>

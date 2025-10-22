@@ -1,3 +1,9 @@
+# 1.10.4
+- Fixed Magento_NL custom field handling
+- Added newsletter subscribers import via CLI functionality
+- Added order history import via CLI functionality
+- Added contact event sending for wishlist products
+
 # 1.10.3
 - Added the “other” permission option to the configuration settings.
 

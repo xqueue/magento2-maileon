@@ -10,8 +10,10 @@ use Magento\Customer\Model\CustomerFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Newsletter\Model\Subscriber as NewsletterSubscriber;
+use Magento\Newsletter\Model\ResourceModel\Subscriber as SubscriberResource;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\StoreManagerInterface;
+use Throwable;
 
 class ContactBuilder
 {
@@ -19,10 +21,11 @@ class ContactBuilder
         private Config $config,
         private StoreManagerInterface $storeManager,
         private CustomerRepositoryInterface $customerRepository,
-        private CustomerFactory $customerFactory
+        private CustomerFactory $customerFactory,
+        private SubscriberResource $subscriberResource
     ) {}
 
-    public function buildCustomerContactObject(Customer $customer, bool $isSubscriber = false): Contact
+    public function buildCustomerContactObject(Customer $customer): Contact
     {
         $contact = new Contact();
         $contact->email = $customer->getEmail();
@@ -33,7 +36,8 @@ class ContactBuilder
         $contact->custom_fields = $this->setCustomerCustomContactFields(
             $customer,
             $customer->getDefaultBillingAddress() ?: null,
-            $isSubscriber
+            $this->isCustomerSubscribed($customer),
+            true
         );
 
         return $contact;
@@ -53,7 +57,7 @@ class ContactBuilder
         ];
         $contact->custom_fields = [
             'magento_created' => true,
-            'Magento_NL' => false,
+            'Magento_NL' => $this->isOrderCustomerSubscribed($order),
             'createdByTransaction' => true,
             'magento_storeview_id' => (string) $order->getStoreId(),
             'magento_domain' => $this->getBaseUrl($order->getStoreId()),
@@ -86,7 +90,8 @@ class ContactBuilder
             $customFields = $this->setCustomerCustomContactFields(
                 $customer,
                 $customer->getDefaultBillingAddress() ?: null,
-                true
+                $subscriber->isSubscribed(),
+                false
             );
         } else {
             $standardFields['LOCALE'] = $this->config->getLocale($subscriber->getStoreId());
@@ -133,13 +138,14 @@ class ContactBuilder
     protected function setCustomerCustomContactFields(
         ?Customer $customer,
         ?Address $address,
-        bool $isSubscriber = false
+        bool $isSubscriber = false,
+        bool $createForTransaction = false
     ): array {
         $customFields = [
             'magento_created' => true,
             'Magento_NL' => $isSubscriber,
-            'createdByTransaction' => !$isSubscriber,
-            'magento_source' => $isSubscriber ? 'newsletter' : 'transaction',
+            'createdByTransaction' => $createForTransaction,
+            'magento_source' => $createForTransaction ? 'transaction' : 'newsletter',
         ];
 
         if (! $customer) {
@@ -159,7 +165,7 @@ class ContactBuilder
     {
         return [
             'magento_created' => true,
-            'Magento_NL' => true,
+            'Magento_NL' => $subscriber->isSubscribed(),
             'createdByTransaction' => false,
             'magento_storeview_id' => (string) $subscriber->getStoreId(),
             'magento_domain' => $this->getBaseUrl($subscriber->getStoreId()),
@@ -189,5 +195,54 @@ class ContactBuilder
     protected function mergeFields(array $base, array $override): array
     {
         return array_merge($base, $override);
+    }
+
+    public function isOrderCustomerSubscribed(Order $order): bool
+    {
+        try {
+            if ($order->getCustomerIsGuest()) {
+                return $this->isEmailSubscribed($order->getCustomerEmail(), $order->getStoreId());
+            } else {
+                return $this->isCustomerIdSubscribed($order->getCustomerId(), $order->getStoreId());
+            }
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    public function isCustomerSubscribed(Customer $customer): bool
+    {
+        try {
+            if ($this->isCustomerIdSubscribed($customer->getId(), $customer->getStoreId())) {
+                return true;
+            } else {
+                return $this->isEmailSubscribed($customer->getEmail(), $customer->getStoreId());
+            }
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * @throws NoSuchEntityException
+     */
+    public function isCustomerIdSubscribed(int $customerId, ?string $storeId): bool
+    {
+        $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
+        $subscriberData = $this->subscriberResource->loadByCustomerId($customerId, $websiteId);
+
+        return isset($subscriberData['subscriber_status']) && (int) $subscriberData['subscriber_status'] === 1;
+    }
+
+    /**
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
+     */
+    public function isEmailSubscribed(string $email, ?string $storeId): bool
+    {
+        $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
+        $subscriberData = $this->subscriberResource->loadBySubscriberEmail($email, $websiteId);
+
+        return isset($subscriberData['subscriber_status']) && (int) $subscriberData['subscriber_status'] === 1;
     }
 }
