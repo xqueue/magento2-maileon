@@ -4,33 +4,12 @@
 
     <preference for="Xqueue\Maileon\Api\MaileonWebhookInterface" type="Xqueue\Maileon\Model\Api\MaileonWebhook"/>
 
-    <type name="Magento\Framework\Console\CommandList">
+    <type name="Magento\Framework\Console\CommandListInterface">
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="xqueue_maileon_import_newsletter_subscribers" xsi:type="object">Xqueue\Maileon\Console\Command\ImportNewsletterSubscribersCommand</item>
-            </argument>
-        </arguments>
-    </type>
-
-    <type name="Magento\Framework\Console\CommandList">
-        <arguments>
-            <argument name="commands" xsi:type="array">
                 <item name="xqueue_maileon_import_order_history" xsi:type="object">Xqueue\Maileon\Console\Command\ImportOrderHistoryCommand</item>
-            </argument>
-        </arguments>
-    </type>
-
-    <type name="Magento\Framework\Console\CommandList">
-        <arguments>
-            <argument name="commands" xsi:type="array">
                 <item name="xqueue_maileon_mark_abandoned_carts" xsi:type="object">Xqueue\Maileon\Console\Command\MarkAbandonedCartsCommand</item>
-            </argument>
-        </arguments>
-    </type>
-
-    <type name="Magento\Framework\Console\CommandList">
-        <arguments>
-            <argument name="commands" xsi:type="array">
                 <item name="xqueue_maileon_send_abandoned_carts" xsi:type="object">Xqueue\Maileon\Console\Command\SendAbandonedCartsCommand</item>
             </argument>
         </arguments>

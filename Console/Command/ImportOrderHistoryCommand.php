@@ -59,6 +59,8 @@ class ImportOrderHistoryCommand extends Command
                 'Export orders up to this date (Y-m-d)',
                 date('Y-m-d')
             );
+
+        parent::configure();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

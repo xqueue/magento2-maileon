@@ -1,3 +1,6 @@
+# 1.10.5
+- Fixed console command list
+
 # 1.10.4
 - Fixed Magento_NL custom field handling
 - Added newsletter subscribers import via CLI functionality

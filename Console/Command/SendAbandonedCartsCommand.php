@@ -21,6 +21,8 @@ class SendAbandonedCartsCommand extends Command
     {
         $this->setName('xqueue:maileon:send-abandoned-carts')
             ->setDescription('Send abandoned carts to Maileon');
+
+        parent::configure();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
