@@ -4,39 +4,40 @@ namespace Xqueue\Maileon\Plugin\Newsletter;
 
 use Xqueue\Maileon\Service\EmailContext;
 
+/**
+ * Marks the newsletter e-mail type for OverrideRecipient while the core method runs.
+ * Each around plugin returns the core result (the subscriber, for chaining) and clears
+ * the context even if sending throws.
+ */
 class Subscriber
 {
     public function __construct(
         private EmailContext $emailContext
     ) {}
 
-    public function beforeSendConfirmationRequestEmail(): void
+    public function aroundSendConfirmationRequestEmail($subject, callable $proceed): mixed
     {
-        $this->emailContext->setEmailType('nl_confirm');
+        return $this->runWithEmailType('nl_confirm', $proceed);
     }
 
-    public function afterSendConfirmationRequestEmail(): void
+    public function aroundSendConfirmationSuccessEmail($subject, callable $proceed): mixed
     {
-        $this->emailContext->clear();
+        return $this->runWithEmailType('nl_success', $proceed);
     }
 
-    public function beforeSendConfirmationSuccessEmail(): void
+    public function aroundSendUnsubscriptionEmail($subject, callable $proceed): mixed
     {
-        $this->emailContext->setEmailType('nl_success');
+        return $this->runWithEmailType('nl_unsubscribe', $proceed);
     }
 
-    public function afterSendConfirmationSuccessEmail(): void
+    private function runWithEmailType(string $emailType, callable $proceed): mixed
     {
-        $this->emailContext->clear();
-    }
+        $this->emailContext->setEmailType($emailType);
 
-    public function beforeSendUnsubscriptionEmail(): void
-    {
-        $this->emailContext->setEmailType('nl_unsubscribe');
-    }
-
-    public function afterSendUnsubscriptionEmail(): void
-    {
-        $this->emailContext->clear();
+        try {
+            return $proceed();
+        } finally {
+            $this->emailContext->clear();
+        }
     }
 }

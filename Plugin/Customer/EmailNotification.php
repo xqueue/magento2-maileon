@@ -21,20 +21,20 @@ class EmailNotification
         private Logger $logger
     ) {}
 
-    public function beforeCredentialsChanged(): void
+    public function aroundCredentialsChanged(MagentoCustomerEmailNotification $subject, callable $proceed, ...$args): mixed
     {
-        $this->emailContext->setEmailType('credentials_changed');
+        $result = $this->proceedWithEmailType('credentials_changed', $proceed, $args);
+        $this->sendCredentialsChangedTransaction($subject, ...$args);
+
+        return $result;
     }
 
-    public function afterCredentialsChanged(
+    private function sendCredentialsChangedTransaction(
         MagentoCustomerEmailNotification $subject,
-        $result,
         CustomerInterface $savedCustomer,
         $origCustomerEmail,
         $isPasswordChanged = false
     ): void {
-        $this->emailContext->clear();
-
         try {
             if ($this->config->isCredentialsChangedTXEnabled()) {
                 $customer = $this->customerFactory->create();
@@ -64,18 +64,18 @@ class EmailNotification
         }
     }
 
-    public function beforePasswordReminder(): void
+    public function aroundPasswordReminder(MagentoCustomerEmailNotification $subject, callable $proceed, ...$args): mixed
     {
-        $this->emailContext->setEmailType('psw_reminder');
+        $result = $this->proceedWithEmailType('psw_reminder', $proceed, $args);
+        $this->sendPasswordReminderTransaction($subject, ...$args);
+
+        return $result;
     }
 
-    public function afterPasswordReminder(
+    private function sendPasswordReminderTransaction(
         MagentoCustomerEmailNotification $subject,
-        $result,
         CustomerInterface $customer,
     ): void {
-        $this->emailContext->clear();
-
         try {
             if ($this->config->isPswReminderTXEnabled()) {
                 $customerModel = $this->customerFactory->create();
@@ -91,18 +91,18 @@ class EmailNotification
         }
     }
 
-    public function beforePasswordResetConfirmation(): void
+    public function aroundPasswordResetConfirmation(MagentoCustomerEmailNotification $subject, callable $proceed, ...$args): mixed
     {
-        $this->emailContext->setEmailType('psw_reset');
+        $result = $this->proceedWithEmailType('psw_reset', $proceed, $args);
+        $this->sendPasswordResetConfirmationTransaction($subject, ...$args);
+
+        return $result;
     }
 
-    public function afterPasswordResetConfirmation(
+    private function sendPasswordResetConfirmationTransaction(
         MagentoCustomerEmailNotification $subject,
-        $result,
         CustomerInterface $customer,
     ): void {
-        $this->emailContext->clear();
-
         try {
             if ($this->config->isPswResetTXEnabled()) {
                 $customerModel = $this->customerFactory->create();
@@ -118,22 +118,22 @@ class EmailNotification
         }
     }
 
-    public function beforeNewAccount(): void
+    public function aroundNewAccount(MagentoCustomerEmailNotification $subject, callable $proceed, ...$args): mixed
     {
-        $this->emailContext->setEmailType('new_account');
+        $result = $this->proceedWithEmailType('new_account', $proceed, $args);
+        $this->sendNewAccountTransaction($subject, ...$args);
+
+        return $result;
     }
 
-    public function afterNewAccount(
+    private function sendNewAccountTransaction(
         MagentoCustomerEmailNotification $subject,
-        $result,
         CustomerInterface $customer,
         $type = 'customer/create_account/email_template',
         $backUrl = '',
         $storeId = null,
         $sendemailStoreId = null
     ): void {
-        $this->emailContext->clear();
-
         try {
             if ($this->config->isNewAccountTXEnabled()) {
                 $customerModel = $this->customerFactory->create();
@@ -146,6 +146,20 @@ class EmailNotification
                 'line' => $exception->getLine(),
                 'trace' => $exception->getTraceAsString(),
             ]);
+        }
+    }
+
+    /**
+     * Runs the core method with the e-mail type set for OverrideRecipient, clearing it even on exceptions.
+     */
+    private function proceedWithEmailType(string $emailType, callable $proceed, array $args): mixed
+    {
+        $this->emailContext->setEmailType($emailType);
+
+        try {
+            return $proceed(...$args);
+        } finally {
+            $this->emailContext->clear();
         }
     }
 }

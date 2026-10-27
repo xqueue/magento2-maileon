@@ -1,3 +1,7 @@
+# 1.10.10
+- Fixed e-mail sender plugins returning null instead of the original result (e.g. `OrderSender::send()` / `InvoiceSender::send()` bool), which caused errors in payment modules such as Mollie and repeated sending with asynchronous e-mail sending
+- Fixed the e-mail type context staying active when sending an e-mail throws an exception
+
 # 1.10.9
 - Fixed a customer credential change notification compatibility issue
 
